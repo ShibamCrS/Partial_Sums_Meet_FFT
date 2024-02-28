@@ -1,5 +1,5 @@
 CC=gcc
-OPT= -O2 -g -fsanitize=address
+OPT= -O -g -fsanitize=address
 LIB=-lm -lpthread
 
 UTL_DIC="../utility/"
