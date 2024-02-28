@@ -1,0 +1,83 @@
+\section{Introduction}\label{sec:intro}
+
+The \emph{partial sums} cryptanalytic technique was introduced by Ferguson et al.~\cite{FSE:FKLSSWW00} as a tool for enhancing the Square attack~\cite{FSE:DaemenKR97} on  AES~\cite{AES}. Informally, the Square attack requires computing the XOR of $2^{32}$ 8-bit values extracted from partially decrypted ciphertexts under each of $2^{40}$ candidate subkeys, which amounts to $2^{72}$ operations. The partial sums technique divides the attack into several steps where at each step, the adversary guesses several key bits and computes a `partial sum', which allows reducing the number of partially decrypted values whose XOR should be computed. As a result, the overall complexity of the attack is significantly reduced to $2^{52}$ operations.
+
+In the 23 years since the introduction of the partial sums technique, it was shown to enhance not only the Square attack but also several other attacks (e.g., integral, linear, zero-correlation linear, and multi-set algebraic attacks, see~\cite{EPRINT:ADGLLT19,EC:BDDLKT15,C:BarKel16,TOSC:BirKhoPer16,DESI:DemirbacsKara22}) in various scenarios, and was applied to attack numerous ciphers (AES, Kuznyechik, MISTY1, CLEFIA, Skinny, Zorro, Midori, and LBlock, to mention a few). Yet, its best known application remained the original one -- the attack on 6-round AES which remained the best attack on 6-round AES,  
+despite many attempts to supersede it (see Table~\ref{Tab:Results}).
+
+In 2014, Todo and Aoki~\cite{CANS:TodAok14} showed that an FFT-based technique can replace partial sums in enhancing the Square attack. The idea is to represent the XOR of the $2^{32}$ partially decrypted ciphertexts which the adversary has to compute as a \emph{convolution} of two tailor-made functions and then to use the Fast Fourier Transform (FFT) in order to compute this value for all guessed subkeys at once, at the cost of about $4 \cdot 2^{32} \cdot \log(2^{32})$ addition operations. While at a first glance, this technique seems clearly advantageous over partial sums, subtle practical difficulties counter its advantages, making the two techniques comparable. First, the technique can be applied only after guessing 8 bits of the key. Secondly, as the output of the FFT is an element in $\mathbb{Z}$ and not an element in the finite field $GF(2^8)$, one has to repeat the procedure for each of the 8 bits in which the XOR should be computed. Thirdly, while partial sums can exploit partial knowledge of the subkeys the adversary needs to guess, it seems that the FFT-based technique does not gain anything from partial knowledge. According to the authors of~\cite{CANS:TodAok14}, the complexity of their attack on 6-round AES is $6 \cdot 2^{50}$ addition operations, which is roughly equal to the complexity of the partial sums attack. 
+
+In the last decade, the Todo-Aoki technique was used as a comparable alternative of partial sums, with several authors mentioning advantages of each attack technique in different scenarios (see~\cite{EPRINT:ADGLLT19,EC:BDDLKT15,RSA:CHWW22,ARXIV:YiCheWei14}). Yet, it seemed that one has to choose between the benefits of the two techniques in each application. 
+
+In this paper we show that one can combine partial sums with an FFT-based technique, getting the best of the two worlds in many cases. The basic idea behind our technique is to use the general structure of partial sums, but to replace particular key-guessing steps used in partial sums (or combinations of several such steps) by FFT-based steps, which include embedding finite field elements into $\mathbb{Z}$. We show that this allows computing the XOR in all 8 output bits at once, exploiting partial key knowledge, and even {\it packing} several computations together in the same 64-bit word addition and multiplication operations. As a result, we obtain the speedup of FFT over key guessing, without the disadvantages it carries in the Todo-Aoki technique. In addition, the new technique allows for much more flexibility, as we may choose which steps we group together and in which steps we use FFT instead of key guessing. The choice depends on multiple step-dependent parameters, such as the number of subkey bits guessed in the step, the ability to pre-compute some of the operations required for the FFT, and partial knowledge of subkey bits. Thus, the flexibility may be very helpful.
+
+We use our technique to mount an improved attack on 6-round AES. We obtain an attack which requires $2^{33}$ chosen plaintexts (compared to $2^{34.5}$ in the partial sums attack of~\cite{FSE:FKLSSWW00}), time complexity of about $2^{46.4}$ additions (compared to $2^{52}$ S-box computations in partial sums), and memory complexity of $2^{27}$ 128-bit blocks (roughly the same as in partial sums). As it is hard to compare additions with S-box applications, we compared the attacks experimentally, by fully implementing our attack, the partial sums attack, and the Todo-Aoki attack, using Amazon AWS servers. We optimized the instance which best fits the attacks (optimizing for performance/cost tradeoff). 
+Our experiments show that our attack takes \timeOur minutes (and costs \priceOur US\$), the partial sums attack takes \timePartial minutes (and costs \pricePartial US\$), and the Todo-Aoki attack takes \timeFFT minutes (and costs \priceFFT US\$). Thus, our attack provides a speedup by a factor of more than \speedup over both the partial sums attack and Todo-Aoki's attack, and allows breaking 6-round AES in about \timeOur minutes at the cost of only \priceOur US\$. This breaks a 23-year old record in practical attacks on 6-round AES. Table~\ref{tab:Costs} summarizes the costs of running the attacks. 
+% The source code is publicly available at the following link \href{https://github.com/ShibamCrS/Partial\_Sums\_Meet\_FFT}{https://github.com/ShibamCrS/Partial\_Sums\_Meet\_FFT}.
+
+\begin{table}[t]
+\begin{center}
+\caption{Cost comparison of three best attacks on 6-Round AES in Amazon's AWS}
+\begin{tabular}{llcc}
+\hline
+Attack (Source) & AWS Instance & ~~Running Time~~   & ~~Total Cost~~ \\
+ & & (in minutes) & (in US\$)\\
+\hline
+Square \& Partial sums~\cite{FSE:FKLSSWW00} &  m6i.32xlarge & \timePartial & \pricePartial\\
+Square \& FFT~\cite{CANS:TodAok14} & r6i.32xlarge & \timeFFT & \priceFFT\\
+\hline
+Square \& Partial sums \& FFT~(Sect.~\ref{sec:sub:experiment}) & m6i.32xlarge & \timeOur & \priceOur\\
+\hline
+\end{tabular}
+%\end{twoparttable}
+\label{tab:Costs}
+\end{center}
+%\vspace*{-1.1cm}
+\end{table}
+
+Our attack improves the partial sums attack of~\cite{FSE:FKLSSWW00} on 7-round AES by the same factor. In addition, it might be applicable to other primitives that use 6-round AES as a component like the tweakable block cipher TNT-AES~\cite{BaoG0S20}.
+
+Due to the flexibility of our technique, it can be used to improve various attacks that use the partial sums technique. We demonstrate this applicability by presenting improved attacks on one cipher :
+\begin{itemize}
+    \item Kuznyechik~\cite{Kuznyechik} -- the Russian Federation encryption standard. The best-known attack on Kuznyechik is a multiset-algebraic attack on 7 rounds (out of 9) with the complexity of $2^{154.5}$ encryptions, presented by Biryukov et al.~\cite{TOSC:BirKhoPer16}. We show that this attack can be improved by a factor of more than 80 to about $2^{148}$ encryptions, thus providing the best-known attack on Kuznyechik.
+\end{itemize}
+A comparison of our results on 6-round AES and reduced Kuznyechik  with previously known results is presented in Table~\ref{Tab:Results}.
+
+The full version of this paper \cite{fullversion} presents our techniques with two other targets MISTY1 and CLEFIA in Appendix~A and Appendix~B respectively.
+We improve the Bar-On and Keller~\cite{C:BarKel16} attack by a factor 6 (to $2^{67}$) and obtain the best known attacks against full MISTY1.
+We also improved multiple attacks against CLEFIA \cite{SAC:BGWWC13,WISA:LiWuZha11,SAC:SasWan12} for 11, 12 and 14 rounds. 
+Most strikingly, we improve the 12-round attack of Sasaki and Wang~\cite{SAC:SasWan12} by about a factor $2^{30}$.\\
+
+
+\begin{table}[t]
+\begin{center}
+%\begin{twoparttable}
+\caption{Comparison of our results with previous key recovery attacks on 6-Round AES and reduced Kuznyechik. The results are listed in chronological order.}  \begin{tabular}{lcllll}
+\hline
+Cipher & Rounds & Data          & Time           & ~~ & \multicolumn{1}{l}{Technique and Source}\\
+\hline
+\hline
+AES & 6 & $2^{32}$ CP & $2^{71}$ Enc. & & Square~\cite{FSE:DaemenKR97} \\
+    &   & $6 \cdot 2^{32}$ CP & $2^{52}$ S-box Eval.  & & Square \& Partial sums~\cite{FSE:FKLSSWW00}\\
+    & & $2^{71}$ ACPC & $2^{71}$ Enc. & & Boomerang~\cite{AES:Biryukov04}\\
+    & & $2^{33}$ CP & $2^{52}$ S-box Eval. & & Square \& Partial sums~\cite{Tunstall12}\\
+    & & $6 \cdot 2^{32}$ CP & $2^{52}$ Add. & & Square \& FFT~\cite{CANS:TodAok14}\\
+    & & $2^{26}$ CP & $2^{80}$ Enc. & & Mixture Differential~\cite{JOC:Bar-OnDKRS20} \\
+    & & $2^{55}$ ACPC & $2^{80}$ Enc. & & Retracing Boomerang~\cite{EC:DunkelmanKRS20} \\
+    & & $2^{79.7}$ ACPC & $2^{78}$ Enc. & & Boomeyong~\cite{TOSC:RahmanS021} \\
+    & & $2^{59}$ ACPC & $2^{61}$ Enc.  & & Truncated Boomerang~\cite{EPRINT:BarLeu22}\\
+\hline
+    & & $2^{33}$ CP & $2^{46.4}$ Add. & & Square \& Partial sums \& FFT~(Sect.~\ref{sec:new_attack})\\
+\hline\hline
+Kuznyechik & 7 & $2^{128}$ KP & $2^{154.5}$ Enc. & & Integral \& Partial sums~\cite{TOSC:BirKhoPer16}\\
+& 6 & $2^{120}$ KP & $2^{146.5}$ Enc. & & Integral \& Partial sums~\cite{TOSC:BirKhoPer16}\\
+\hline
+     & 7 & $2^{128}$ KP & $2^{148}$ Enc. & & Integral \& Partial sums \& FFT~(Sect.~\ref{sec:other_target})\\
+     & 6 & $2^{120}$ KP & $2^{140.9}$ Enc. & & Integral \& Partial sums \& FFT~(Sect.~\ref{sec:other_target})\\
+\hline\hline
+\end{tabular}
+\label{Tab:Results}
+\end{center}
+\end{table}
+The paper is organized as follows. In Section~\ref{sec:background}, we describe the structure of the AES, the Square attack, and the two previously known methods for enhancing it -- partial sums and the Todo-Aoki FFT-based method. Section~\ref{sec:new_attack} presents our new technique, along with its application to 6-round AES.
+Section~\ref{sec:other_target} presents application of the new technique to the cipher Kuznyechik. 

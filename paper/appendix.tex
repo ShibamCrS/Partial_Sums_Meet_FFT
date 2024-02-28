@@ -1,0 +1,287 @@
+\section*{Supplementary Material}
+
+\section{Improved Attack on the Full MISTY1}\label{app:misty1}
+
+In this appendix we improve the best known attack on the full version of the MISTY1 block cipher. The time complexity of the attack, presented in~\cite{C:BarKel16}, is improved by a factor of about 6.
+
+\subsection{The structure of MISTY1} 
+
+MISTY1~\cite{MISTY1} is a 64-bit block cipher with 128-bit keys designed in 1995 by
+Matsui for Mitsubishi Electric. It is widely used in Japan (where it was recommended for use by the Government CRYPTREC project between 2003 and 2013) and is recognized internationally as an ISO standard. In addition, a slight modification of MISTY1 called KASUMI is used by millions of customers worldwide as the cipher of the 3G cellular networks.
+
+MISTY1 has an 8-round recursive Feistel structure, where the round function $FO$ is in itself a 3-round Feistel construction, whose F-function $FI$ is in turn a 3-
+round Feistel construction using 7-bit and 9-bit invertible S-boxes called $S_9$ and $S_7$. In addition, after every two rounds a key-dependent linear function $FL$ is applied independently to each of the two halves of the state. As the description of the cipher is somewhat complex, we present below the details required for our attack and refer the reader to~\cite{MISTY1} for the full details.
+
+MISTY1 was the subject of dozens of cryptanalytic attacks (see, e.g.,~\cite{C:BarKel16} and the references therein). Some of these attacks use the partial sums technique (e.g.,~\cite{C:BarKel16,DESI:DunKel15,JC:Todo17}) and it seems that all of them can be improved using our technique. We present an improvement of the best known attack on the full MISTY1, and leave other improvements for further research.
+
+\subsection{Previous attacks on the full MISTY1} 
+
+In the first 20 years since its design, MISTY1 withstood numerous cryptanalytic attempts. At Crypto'15, Todo~\cite{C:Todo15} presented the first attack on the full MISTY1, based on a novel variant of the integral attack called \emph{division property}. The attack is based on the following (hard to prove) result: 
+\begin{lemma}\label{Lem:MISTY1_1}
+Consider the encryption by 6-round MISTY1 of a set of $2^{63}$ distinct plaintexts, $P^0,P^1,\ldots,P^{2^{63}-1}$, which form a subspace of degree 63 of $\{0,1\}^{64}$ of a specific form. Then the corresponding ciphertexts satisfy $\bigoplus_{i=0}^{2^{127}-1} [C^i]_{57-63}=0$ (i.e., the 7 most significant bits of the XOR are equal to zero).  
+\end{lemma}
+In order to use Lemma~\ref{Lem:MISTY1_1} to attack the full 8-round MISTY1, the adversary asks for the encryption of almost the entire codebook and partially guesses the subkey of the initial $FL$ layer, which allows him to find a set of $2^{63}$ plaintexts whose corresponding intermediate values after the initial $FL$ layer satisfy the assumption of Lemma~\ref{Lem:MISTY1_1}. By the lemma, the XOR of the corresponding intermediate values at the end of the 6'th round equals 0 in the 7 most significant bits. To check this, the adversary partially guesses the subkey of the 8'th round and of the $FL$ layers $FL7,FL9,FL10$, and partially decrypts the ciphertexts to the point where the XOR can be checked. 
+
+The main difficulty in this approach is that the amount of key material that should be guessed is very large. Todo~\cite{C:Todo15} showed that the complexity can be reduced using the partial sums technique, and obtained an attack with time complexity of $2^{107.3}$ encryptions. 
+
+In~\cite{C:BarKel16}, Bar-On and Keller showed that the complexity can be significantly reduced to $2^{69.5}$ encryptions by a very complex procedure, which incorporates into the partial sums attack a `meet in the middle' ingredient along with other ingredients. As the description of the attack is rather complex, we refer the reader to~\cite{C:BarKel16} for the complete description of the attack, and present only the two most time consuming steps which essentially determine the time complexity of the attack. These two steps, which are Steps~2.1 and 2.2 of the algorithm described in~\cite[Section~4.4]{C:BarKel16} and are demonstrated in  Figure~5 and Table~4 there, can be summarized as follows:
+\begin{itemize}
+    \item \emph{Step~2.1:} At the input of the step, the adversary possesses a list of $2^{25}$ binary indices, which correspond to 16 bits at the input of $FI_{8,1}$ (before the addition of the subkey $K_8$) and 9 bits of the second half of the state. The adversary guesses the 16-bit subkey $K_8$, computes the first two rounds of the function $FI_{8,1}$, and reduces the list to a new list of $2^{18}$ indices which correspond to 9 bits of the input to the third round of $FI_{8,1}$ and an updated version of the 9 bits of the second half which incorporates XOR with the output of the second round of $FI_{8,1}$. In addition, a similar operation squeezes a list of $2^{23}$ binary indices which correspond to 16 bits at the input of $FI_{8,1}$ and 7 bits of the second half of the state, to a list of $2^{16}$ indices.
+
+    \item \emph{Step~2.2:} The adversary guesses the 9-bit equivalent subkey $EK_5^R$, computes the third round of $FI_{8,1}$, and reduces the list to a new list of $2^{9}$ indices which correspond to 9 bits of the input to the function $FI_{8,3}$ (before the XOR with a subkey). In addition, a similar operation squeezes a list of $2^{16}$ binary indices, to a list of $2^{7}$ indices. 
+\end{itemize}
+According to the analysis of~\cite{C:BarKel16}, Step~2.1 requires $2^{25} \cdot 2^{16} + 2^{23} \cdot 2^{16} = 2^{41.3}$ S-box computations (where we simply multiply the number of guessed subkey bits by the size of the lists), and Step~2.2 requires $2^{16} \cdot 2^9 \cdot (2^{14}+2^{16})=2^{41.3}$ S-box computations (where an additional trick allows `paying' $2^{14}$ instead of $2^{18}$ for the size of the larger list).
+The two steps are performed for each guess of the 32-bit subkey used in $FL10$, and thus, the overall complexity of the attack is about $2^{32} \cdot 2 \cdot 2^{41.3} =2^{73.3}$ S-box computations, which are equivalent to about $2^{69.5}$ encryptions. 
+
+\subsection{Improvement using our technique} 
+
+We show that Steps~2.1 and 2.2 presented above can be significantly improved using our technique.
+
+First, we consider Step~2.1. We divide this step into two sub-steps. At the first sub-step, we guess 9 bits of the subkey $K_8$ and compute the first round of $FI_{8,1}$ for all $2^{25}$ values in the list. This partial computation does not allow reducing the size of the list, but we update the list in a way that fully incorporates the effect of the computed round on the entries. As the complexity of this sub-step is $2^9 \cdot 2^{25}=2^{34}$ S-box computations, there is no further need to speed it up. 
+
+At the second sub-step, for each guess made at the first sub-step, we guess the 7 remaining bits of the subkey $K_8$, compute the second round of $FI_{8,1}$ for all values of the list, and reduce the size of the list to $2^{18}$. Basically, the complexity of this sub-step is $2^{7} \cdot 2^9 \cdot 2^{25}=2^{41}$ S-box computations. However, we may perform it by computing a convolution, exactly like in the second and the third steps of the attack on AES. Here, the convolution we have to compute is $I*\chi(a,k)$, where $a$ denotes the updated value of the 7 bits taken from the second half of the state, $k$ denotes the guessed 7-bit subkey, and the convoluted functions are $I(x,y)=1(x=S_7(y))$, and $\chi(x,y)$ which is the indicator function of the list, like in the attack on AES. We may pack 8 FFT's into the same computation (and actually, even more than 8, since the FFT is computed over 14 bits and not over 16 bits), and we also can precompute the FFT of $I(x,y)$. Hence, the complexity of this step is $2^{9} \cdot 2^{11} \cdot 2 \cdot 14 \cdot 2^{14}/8 = 2^{35.8}$ additions. The complexity of the second part of Step~2.1 (in which the same computation is performed for a list of size $2^{23}$) is smaller by a factor of 4, like in the attack of~\cite{C:BarKel16}. Therefore, the complexity of Step~2.1 is reduced to about $2^{36.3}$ additions (compared to $2^{41.3}$ S-box computations in~\cite{C:BarKel16}).
+
+Next, we consider Step~2.2. This step can be performed by computing a convolution just like the second sub-step of Step~2.1. The only differences are that the function $I(x,y)$ is replaced by $I'(x,y)=1(x=S_9(y))$, the function $\chi(x,y)$ is updated to the corresponding list, and the convolution is performed for functions $I',\chi:\{0,1\}^{18} \to \{0,1\}$. This time, packing 8 FFTs into the same computation may be problematic (since the FFT is computed over 18 bits, instead of 16 bits), but 4 FFTs can still be packed together easily. The complexity of this step is $2^{16} \cdot 2 \cdot 18 \cdot 2^{18}/4 = 2^{37.2}$ additions. The complexity of the second part of Step~2.2 (in which the same computation is performed for a list of size $2^{16}$) is smaller by a factor of 4, like in the attack of~\cite{C:BarKel16}. Therefore, the complexity of Step~2.2 is reduced to about $2^{37.5}$ additions (compared to $2^{41.3}$ S-box computations in~\cite{C:BarKel16}). 
+
+Overall, the complexity of Steps~2.1 and~2.2 is reduced to less than $2^{38}$ additions. As Steps~1,2 of the attack of~\cite{C:BarKel16} contain two other steps, each taking about $2^{38}$ S-box computations (Steps 2.3 and 2.4+2.5), the overall complexity of these steps is reduced to about $2^{40}$ S-box computations. Recalling that these steps are performed for each guess of the 32 subkey bits used in $FL10$, the time complexity of the attack is $2^{32} \cdot 2^{40}=2^{72}$ S-box computations, which are equivalent to about $2^{67}$ MISTY1 encryptions. 
+
+This reduces the complexity of the attack of~\cite{C:BarKel16} by a factor of about 6. We note that in this case, the improvement is more modest than in other cases. The reason for this is that the attack of~\cite{C:BarKel16} contains steps which do not use the partial sums technique and whose complexity is not much lower than the complexity of the most time consuming partial sums steps.
+
+\section{Improved Attacks on Reduced-Round CLEFIA}\label{app:CLEFIA}
+
+In this appendix we present improved attacks on 11-round and 12-round CLEFIA with 128-bit keys, which significantly improve previous attacks which used the partial sums technique. Among the known attacks on 12-round CLEFIA, our attack has the lowest time complexity, if encryption of the data is not taken into account. We note that due to the high data complexity and to the fact that there exist attacks faster than exhaustive key search on 13-round and 14-round CLEFIA-128 (see~\cite{JOC:BouraLNS18,FSE:LiJWD15} and the references therein), the impact of our attacks on the security level of CLEFIA-128 is limited. The main purpose of the presentation here is to demonstrate the huge advantage our technique can provide over partial sums in cases where the amount of subkey bits guessed in the most time consuming steps of the attack is large. In the case of 12-round CLEFIA-128, 32 subkey bits are guessed at once, which allows us speeding up the attack by a factor of about $2^{30}$. 
+
+Our attack can be also used to improve the time complexity of the partial sums attacks on 14-round CLEFIA-192 and on 15-round CLEFIA-256 presented in~\cite{SAC:BGWWC13,CISC:YiWCL16}, by a factor of more than 32. As the improvement is similar to other applications of our technique, and since these attacks are superseded by other attacks on the same variants of CLEFIA (see~\cite{JOC:BouraLNS18,FSE:LiJWD15}), we omit the description.  
+
+\subsection{The structure of CLEFIA} 
+
+CLEFIA~\cite{FSE:ShiraiSAMI07} is a block cipher developed in 2007 by Shirai et al.~for the Sony corporation. It is widely used in Japan (where it was recommended as a candidate by the Government CRYPTREC project in 2013) and is recognized internationally as an ISO standard.
+
+CLEFIA is a generalized Feistel construction operating on a 128-bit state organized as a vector of four 32-bit words. We denote the vector at the input of round~$i$ by $(W^i_0,W^i_1,W^i_2,W^i_3)$  Keys of 128, 192, and 256 bits are supported and the number of rounds is 18, 22, or 26 (for keys of 128, 192, and 256 bits, repsectively). CLEFIA with an $n$-bit key is commonly called CLEFIA-n. At each round of CLEFIA, the words $W^i_0,W^i_2$ are fed into a round function ($F_{i,0}$ and $F_{i,1}$, respectively), and the output of the round function is XORed to the next word ($W^i_1$ and $W^i_3$, respectively). Then, the words are shifted cyclically to the left. Hence, the state at the beginning of round~$i+1$ is defined as
+$$
+(W^{i+1}_0,W^{i+1}_1,W^{i+2}_2,W^{i+1}_3) = (W^i_1 \oplus F_{i,0}(W^i_0), W^i_2, W^i_3 \oplus F_{i,1}(W^i_2), W^i_0). 
+$$
+The round function $F_{i,j}:\{0,1\}^{32} \to \{0,1\}^{32}$ is composed of three operations:
+\begin{itemize} 
+    \item[] \textbf{Key Addition}. Add a 32-bit round key $RK_{2i+j}$ computed from the secret key to the state, using a bitwise XOR operation;
+    \item[] \textbf{Substitution}. Apply one of two known 8-bit S-boxes $S_0,S_1$ independently to every byte of the state. For $F_{i,0}$, the order of the S-boxes is $(S_0,S_1,S_0,S_1)$, and for $F_{i,1}$, the order is reversed; 
+    \item[] \textbf{Linear Transformation}. Multiply the state by an invertible 4-by-4 matrix $M_j$ over the finite field $GF(2^8)$.
+\end{itemize}
+As properties of the key schedule of CLEFIA are not used in this paper, we omit its description and refer the reader to~\cite{FSE:ShiraiSAMI07}.
+
+CLEFIA was the subject of many cryptanalytic attacks (see, e.g.,~\cite{SAC:BGWWC13,FSE:LiJWD15} and the references therein). Some of these attacks use partial sums and all of those can be improved using our technique. We present the improvement of the attacks on 11-round and 12-round CLEFIA-128, presented in~\cite{SAC:SasWan12}.
+
+\subsection{Previous partial sums attacks on 11-round CLEFIA-128}
+
+In 2011, Li et al.~\cite{WISA:LiWuZha11} presented an integral attack on 11-round CLEFIA. The attack is based on the following observation: 
+\begin{lemma}\label{Lem:CLEFIA1}
+Consider the encryption by 9-round CLEFIA of a set of $2^{112}$ distinct plaintexts, $P^0,P^1,\ldots,P^{2^{112}-1}$, in which the word $W^0_2$ assumes the $2^{16}$ values 
+$$
+\{(v\oplus w, 02_x\cdot v \oplus 08_x \cdot w, 04_x\cdot v \oplus 02_x \cdot w, 06_x\cdot v \oplus 0a_x \cdot w): v,w \in \{0,1\}^8\}
+$$
+(where multiplication is taken in $GF(2^8)$) and the words $W^0_0,W^0_1,W^0_3$ assume all $2^{96}$ possible values (for each value of $W^0_2$). Then the corresponding ciphertexts satisfy $\bigoplus_{i=0}^{2^{127}-1} C^i_1=0$ (that is, the XOR of the word $W_1$ in the ciphertexts is zero).  
+\end{lemma}
+The attack uses Lemma~\ref{Lem:CLEFIA1} in a way which is similar to the way the Square attack on AES uses Lemma~\ref{Lem:Square1}, but is a bit more complex due the generalized Feistel construction. The adversary asks for the encryption of a set of $2^{112}$ chosen plaintexts that satisfies the assumption of Lemma~\ref{Lem:CLEFIA1}.
+By the lemma, the XOR of the words $W_1$ in the corresponding values at the end of the 9'th round is zero. In order to check this, the adversary guesses some subkey bytes in the last two rounds and partially decrypts the ciphertexts to compute the XOR in a single byte at the end of the 9'th round. Specifically, the adversary checks the XOR in the first byte of the word $W^{9}_1$ by checking the following equation:
+\begin{align}\label{Eq:CLEFIA1}
+  \begin{split}
+\bigoplus S_0(S_1(&C_8 \oplus RK_{21,0}) \oplus 08_x \cdot S_0(C_9 \oplus RK_{21,1}) \oplus 02_x \cdot S_1(C_{10} \oplus RK_{21,2}) \\ &\oplus 0a_x \cdot S_0(C_{11} \oplus RK_{21,3}) \oplus C_{12} \oplus RK'_{18,0})=\bigoplus C',
+  \end{split}  
+\end{align}
+where $C_i$ denotes the $i$'th byte of the ciphertext, the $j$'th byte of the word $RK_{\ell}$ is denoted by $RK_{\ell,j}$, the equivalent subkey $RK'_{18,0}$ is the XOR of $RK_{18,0}$ with a byte of the final whitening key, and $C'=C_0 \oplus 02_x \cdot C_1 \oplus 04_x \cdot C_2 \oplus 06_x \cdot C_3$ is the initial byte of $M_0^{-1}(C_0,C_1,C_2,C_3)$ (see~\cite{SAC:SasWan12} for more details and a figure describing the attack).
+
+The right hand side of~\eqref{Eq:CLEFIA1} can be easily computed in time of $2^{32}$ operations (since it depends on 32 ciphertext bits and does not depend on the key). Naively, the computation of the left hand side of~\eqref{Eq:CLEFIA1} requires $2^{80}$ operations, since it depends on 40 ciphertext bits and on 40 (equivalent) subkey bits. Li et al.~\cite{WISA:LiWuZha11} showed that the computation can be performed with complexity of $2^{56}$ S-box computations, using partial sums. Sasaki and Wang~\cite{SAC:SasWan12} observed that actually $2^{48}$ S-box computations are sufficient. In order to obtain the improved complexity, the computation is divided into five steps, where at each of the first four steps, a single subkey byte is guessed and the size of the list (which is initially $2^{40}$) is reduced by 8 bits, and at the last step, the XOR of $2^{8}$ values is computed. (Note that unlike the partial sums attack on AES, here at the first step, a single subkey byte $RK_{21,0}$ is guessed, and the `new variable' is defined as $a_1=S_1(C_8 \oplus RK_{21,0})\oplus C_{12}$, thus replacing the two variables $C_8,C_{12}$ in the list by the single variable $a_1$. As was shown in~\cite{SAC:SasWan12}, this situation is typical in attacks on Feistel constructions that use the partial sums technique). The complexity of each step is $2^{48}$ S-box computations, and hence, the complexity of checking the XOR for each structure is $2^{50.3}$ S-box computations. Since the attack recovers 5 subkey bytes, six structures are needed, and hence, the overall complexity of the attack is $2^{52.9}$ S-box computations, which are equivalent (according to~\cite{SAC:SasWan12}) to about $2^{46}$ 11-round CLEFIA-128 encryptions. 
+
+\subsection{Improved attack on 11-round CLEFIA-128}
+
+Just like in the case of AES, we can replace each step of the partial sums procedure performed in~\cite{SAC:SasWan12} by computation of a convolution. Here, at all steps but the last one, we may compute 8 convolutions in parallel by embedding into $\mathbb{Z}$ and precompute one FFT, and hence, the complexity of each of the first four steps is reduced to $2^{24} \cdot 2 \cdot 16 \cdot 2^{16}/8=4 \cdot 2^{40}$ additions. At the last step (which computes the XOR of the values), we have to compute the XOR in each bit separately (like in the attack on 6-round AES). On the other hand, we use FFT on 8-bit functions (instead of 16-bit functions), we can pack up to 12 computations in parallel, and we can precompute an additional FFT and reuse it in the computations of the eight bits. Hence, its average complexity is $2^{32} \cdot (1+(1/8)) \cdot 8/12 \cdot 8 \cdot 2^{8}=6 \cdot 2^{40}$ additions. Therefore, the complexity of examining a single set of ciphertexts (except for the initial encryption and ciphertext sorting step) is $(4\cdot 4+6)2^{40}= 2^{44.5}$ additions.
+
+As in the case of AES, when we examine the XOR at the same byte using additional structures, the complexity of the last steps becomes negligible. Therefore, the overall complexity of checking six structures is $2^{40}(22+16+12+8+4)=2^{46}$ additions, which are equivalent to about $2^{39.1}$ 11-round CLEFIA-128 encryptions. This improves the complexity of the attack of~\cite{SAC:SasWan12} by a factor of about 120.
+
+\subsection{Previous partial sums attacks on 12-round CLEFIA-128}
+
+In~\cite{WISA:LiWuZha11}, Li et al.~presented a partial sums attack on 12-round CLEFIA-128 with data complexity of $2^{115.7}$ chosen plaintexts and time complexity of about $2^{120}$ encryptions. In~\cite{SAC:SasWan12}, Sasaki and Wang improved the attack significantly, leaving the data complexity unchanged and reducing the time complexity to about $2^{103.1}$ encryptions (except for the time required for encrypting and sorting the data). The technique of~\cite{SAC:SasWan12}, based on incorporating a `meet in the middle' component into the partial sums attack, is rather complex. Hence, we refer the reader to~\cite{SAC:SasWan12} for the complete description of the attack, and present only the most time consuming step which essentially determines the time complexity of the attack. At this step, the adversary has to compute    
+\begin{align}\label{Eq:CLEFIA2}
+  \begin{split}
+\bigoplus S_0(S_1(&b_0 \oplus RK_{21,0}) \oplus 08_x \cdot S_0(b_1 \oplus RK_{21,1}) \oplus 02_x \cdot S_1(b_2 \oplus RK_{21,2}) \\ &\oplus 0a_x \cdot S_0(b_3 \oplus RK_{21,3}) \oplus C_{8} \oplus RK_{18,0}),
+  \end{split}  
+\end{align}
+where the 32-bit value $(b_0,b_1,b_2,b_3)$ is defined as 
+\begin{align}\label{Eq:CLEFIA3}
+  \begin{split}
+(b_0,b_1,b_2,b_3)=(C_4,C_5,C_6,C_7) \oplus M_0 \cdot& (S_0(C_0 \oplus RK_{22,0}), S_1(C_1 \oplus RK_{22,1}),\\ 
+&S_0(C_2 \oplus RK_{22,2}), S_1(C_3 \oplus RK_{22,3})).
+  \end{split}  
+\end{align}
+Note that~\eqref{Eq:CLEFIA2} depends on the 9 ciphertext bytes $C_0,C_1,\ldots,C_8$.
+In the attack of~\cite{SAC:SasWan12}, the adversary first guesses $RK_{22}$ and computes $(b_0,b_1,b_2,b_3)$, and then he computes~\eqref{Eq:CLEFIA2} by the same algorithm as in the 11-round attack. (Note that once $(b_0,b_1,b_2,b_3)$ is known, the computation of~\eqref{Eq:CLEFIA2} is indeed equivalent to the computation made in the 11-round attack described above). The complexity is dominated by computing $(b_0,b_1,b_2,b_3)$, which requires $2^{32}\cdot 2^{72}=2^{104}$ half-round computations. The attack recovers 13 key bits, and hence, the procedure is repeated for 13 plaintext sets. Therefore, the overall complexity of the attack is $2^{107.7}$ half-round computations, which are equivalent to $2^{103.1}$ 12-round CLEFIA encryptions.
+
+In~\cite{CANS:TodAok14}, Todo and Aoki showed that the partial sums technique can be replaced by a single application of their FFT-based technique. As a result, the time complexity is significantly reduced to $2^{87.5}$ additions.
+
+\subsection{Improved attack on 12-round CLEFIA-128}
+
+We show that using our technique, the time complexity of the attack (without the data collection step) can be further reduced to $2^{75.7}$ encryptions.
+
+First, we consider the step of computing $(b_0,b_1,b_2,b_3)$. We observe that this step can be reorganized and further subdivided into four steps. We can write
+\begin{align*}
+\begin{split}
+(b_0,b_1,b_2,b_3) = M_0 \cdot &(M^{-1} \cdot (C_4,C_5,C_6,C_7) \oplus (S_0(C_0 \oplus RK_{22,0}),\\ &S_1(C_1 \oplus RK_{22,1}), 
+S_0(C_2 \oplus RK_{22,2}), S_1(C_3 \oplus RK_{22,3})).    
+\end{split}
+\end{align*}
+This allows replacing $(C_4,C_5,C_6,C_7)$ by $(C'_4,C'_5,C'_6,C'_7)=M^{-1} \cdot (C_4,C_5,C_6,C_7)$, and then computing $M_0^{-1} \cdot (b_0,b_1,b_2,b_3)$ in four steps. At the first step, $RK_{22,0}$ is guessed, and $C_0,C'_4$ are replaced by $S_0(C_0 \oplus RK_{22,0}) \oplus C'_4$. The same is done in three subsequent steps with $RK_{22,1},RK_{22,2},RK_{22,3}$. The vector we obtain at the end of the fourth step is $M_0^{-1}(b_0,b_1,b_2,b_3)$, which we then transform to $(b_1,b_2,b_3,b_4)$. 
+
+Even if these four steps are performed by naive key guessing, the time complexity of computing $(b_0,b_1,b_2,b_3)$ is already reduced to $4 \cdot 2^{72} \cdot 2^8=2^{82}$ S-box computations. Using our technique, we can perform each of these steps by computing a convolution, which reduces the complexity of each of them to $2^{56} \cdot 2 \cdot 16 \cdot 2^{16}/8 = 2^{74}$ additions. (As usual, we can compute 8 convolutions in parallel and use 16-bit FFTs. Note that here we do not have the step of XORing the values). Thus, the complexity of this step is reduced to $2^{76}$ additions.
+
+Next, we consider the step of computing~\eqref{Eq:CLEFIA2}, given $(b_0,b_1,b_2,b_3)$. Here, we use the 11-round attack like was done in~\cite{SAC:SasWan12}, but we can take advantage of the improved attack we presented above. Hence, we obtain a total complexity of $2^{32} \cdot 2^{45}=2^{77}$ additions. 
+
+Combining the two steps, we obtain complexity of $2^{76}+2^{77}$ additions for checking each set of $2^{112}$ plaintexts. When we check 13 sets of plaintexts, the complexity of the first step remains unchanged, while the complexity of the second step is gradually reduced (as was shown above for the 11-round attack). In total, we obtain complexity of $13 \cdot 2^{76}+ 2^{72}(22+16+12+8+4)=2^{80}$ additions, which are equivalent to about $2^{73}$ 12-round CLEFIA-128 encryptions. This improves the partial sums attack of~\cite{SAC:SasWan12} by a factor of about $2^{30}$ and the FFT-based attack of~\cite{CANS:TodAok14} by a factor of more than $2^7$.
+
+This attack demonstrates the significant advantage achieved by our technique in cases where the number of subkey bits guessed in the most time consuming steps of the partial sums procedure is large. 
+
+\section{Another Variant of Our Attack}
+\label{app:single-convolution}
+
+In this appendix we present another variant of our `Partial sums meet FFT' attack, in which we perform several steps of the attack at once by computing a single convolution. We demonstrate this idea by showing how the first two steps of the attack on 6-round AES can be computed by a single convolution computation. We use the notations of Section~\ref{sec:new_attack}.
+
+In the combined step, we are given a list $A$ of $2^{32}$ binary indices which correspond to $(c_0,c_1,c_2,c_3)$ and our goal is to compute the $2^{16}$ entries of the list $A_2$ which corresponds to pairs of the form $(a_2,c_3)$ where $a_2 = S_0(c_0 \oplus k_0) \oplus S_1(c_1 \oplus k_1) \oplus S_2(c_2 \oplus k_2)$, for all values of $(k_0,k_1,k_2)$. We may perform this step as a single convolution of 24-bit functions. For any $c_3 \in \{0,1\}^8$, define
+$
+\tilde{\chi}^1_{c_3}(c_0,c_1,c_2)=\chi(c_0,c_1,c_2,c_3).
+$
+For any $a_2 \in \{0,1\}^8$, let
+$
+\tilde{I}^1_{a_2}(x,y,z)=\indic(S_0(x) \oplus S_1(y) \oplus S_2(z) = a_1).
+$
+Both $\tilde{\chi}^1_{c_3}$ and $\tilde{I}^1_{a_2}$ are indicator functions on $\{0,1\}^{24}$. For any $a_2,c_3 \in \{0,1\}^8$: 
+
+\begin{align*}
+    (\tilde{\chi}^1_{c_3}& * \tilde{I}^1_{a_2})(k_0,k_1,k_2) = \sum_{\mathclap{c_0,c_1,c_2 \in \{0,1\}^8}} \tilde{\chi}^1_{c_3}(c_0,c_1,c_2) \cdot \tilde{I}^1_{a_2}(c_0 \oplus k_0,c_1 \oplus k_1, c_2 \oplus k_2) \\
+    &= \sum_{\mathclap{c_0,c_1,c_2 \in \{0,1\}^8}} \chi(c_0,c_1,c_2,c_3) \cdot \indic(S_0(c_0 \oplus k_0) \oplus S_1(c_1 \oplus k_1) \oplus S_2(c_2 \oplus k_2) = a_2).
+\end{align*}
+Therefore, the entry which corresponds to $(a_2,c_3)$ in the list $A_2[k_0,k_1,k_2]$ created for the subkey guess $(k_0,k_1)$ is 
+\begin{align}
+    A_2[k_2][a_2,c_3]=\left((\tilde{\chi}^1_{c_3} * \tilde{I}^1_{a_2})(k_0,k_1,k_2)\right) \bmod 2.
+\end{align}
+As in the original variant of the attack, we can precompute two of the three FFTs required for computing this convolution. Since the FFT is performed on 24-bit functions, we cannot pack 8 computations in parallel, but 4 computations are possible (e.g., by taking $s=13$). Therefore, the time complexity of this combined step is $2^{16} \cdot 1 \cdot 24 \cdot 2^{24}/4 = 6 \cdot 2^{40}$ additions, which is comparable to the sum of the complexities of the first two steps in the original attack. 
+
+In a similar way, one may combine the second and the third steps or all three first steps. These combinations do not improve over the original attack in the case of AES, but they may be advantageous in attacks on other ciphers.
+
+
+
+\section{On the Impact of the Packing Technique}
+\label{app:review}
+
+\iffalse
+The paper was previously submitted to Crypto 2023, and the final reviewer
+consensus was summarized as follows:
+\begin{quote}
+\itshape
+All reviewers agree that the idea of combining the partial sums technique with FFT is original and interesting and can potentially lead to more efficient attacks. In the discussions, however, the question was raised about what is the true source of the improvement in the complexity estimates. It seems that [the] improvement gained using the packaged FFT algorithm is mainly due to using a bigger computation unit.
+\end{quote}
+First we would like to point out that we don't really use bigger
+computation units: we use 64-bit operations, while the Todo-Aoki
+attack~\cite{CANS:TodAok14} performs FFTs of dimension 32, which are
+typically implemented with 64-bit operations (32-bit operations would
+overflow).
+
+In order to answer in more detail, we compare our attack on 6-round AES
+with previous attacks on 6-round AES, with and without using the
+packing technique.  This shows more clearly what part of the improvement
+is due to the packing technique, and what part is due to the novel
+combination of partial sums and FFT.
+\else
+In order to show in more details the impact of the packing technique in our results,
+we compare our attack on 6-round AES
+with previous attacks, with and without using the
+packing technique.  This shows more clearly what part of the improvement
+is due to the packing technique, and what part is due to the novel
+combination of partial sums and FFT.
+\fi
+
+\subsection{Comparison of our attack without packing with the previous attacks}
+
+\paragraph{Analysis of our attack without packing.}
+
+If we disregard the packing technique but include the other
+improvements (in particular the precomputation of FFTs when possible), our
+attack has the following complexity to process one set of plaintexts:
+\begin{itemize}
+\item Step 1 requires $16 \cdot 2^{40}$ additions
+\item Step 2 requires $32 \cdot 2^{40}$ additions
+\item Step 3 requires $32 \cdot 2^{40}$ additions
+\item Step 4 requires $72 \cdot 2^{40}$ additions
+\end{itemize}
+
+When processing six sets of plaintexts to recover a single key candidate,
+the total complexity is:
+\begin{gather*}
+2^{40} \cdot \left((16+32+32+72) + (16+32+32+1) + (16+32+1) +
+  (16+1) + 1\right)\\ = 300 \cdot 2^{40} \approx 2^{48.2} \text{~additions.}
+\end{gather*}
+
+
+\paragraph{Comparison with the Todo-Aoki attack.}
+
+When comparing with the Todo-Aoki attack~\cite{CANS:TodAok14} with
+$2^{50.8}$ additions, we gain a factor 6.  Moreover, the additions in
+our attack require fewer bits than in \cite{CANS:TodAok14}, because the
+corresponding FFTs have a smaller dimension: \cite{CANS:TodAok14}
+requires FFTs of dimension 32, while we use FFTs of dimension 16 for
+steps 1 to 3, and of dimension 8 for step 4.  In a naive implementation
+without packing, \cite{CANS:TodAok14} requires 64-bit additions, while
+our attack requires only 32-bit additions (and 16-bit additions for step
+4).  This provides a gain of a further factor 2 in terms of bit operations in
+a naive implementation.  Therefore, when comparing attacks without using
+the packing technique, our attacks gains a factor 12 over the Todo-Aoki
+attack in terms of bit operations.
+
+\paragraph{Comparison with the partial sums attack.}
+
+Directly comparing with the partial sums attack~\cite{FSE:FKLSSWW00} is more
+delicate because its complexity is dominated by $2^{51.3}$ S-box look-ups; the
+relative cost of an S-box lookup and a 32-bit addition can vary depending on
+how the attack is implemented.
+In terms of bit operations, the best known implementations~\cite{TCHES:MaxEkd19}
+of the AES S-box have between 100 and 120 gates.  For comparison, a
+full adder requires 5 gates, therefore a 32-bit adder requires 160 gates; however
+we can drop the high bits and only keep 17 bits of precision when computing the FFT,
+leading to only 85 gates for a 17-bit adder.
+In a software implementation, on the other hand, additions (with 32-bit or 64-bit operands) are typically
+more efficient than S-boxes (implemented as table lookups).
+Moreover, in the attacks considered, most computations (S-boxes or additions) are
+followed by a memory access to a relatively large table (between $2^{32}$
+bits and $2^{40}$ bits).  In practice, memory accesses
+are likely to dominate the time complexity, and the difference between the complexity
+of an addition and the complexity of an S-box evaluation has a limited impact.
+Therefore, we assume that the complexity of an S-box lookup is
+similar to the complexity of an addition (with 32-bit or 64-bit operands).
+This makes comparing attacks easier, and has been used frequently in previous works.
+Under this assumption, we gain a
+factor 8 compared with the partial sum attack.
+
+\subsection{Comparison of our attack with the previous attacks when they use packing}
+
+\paragraph{Analysis of the Todo-Aoki attack with packing.}
+
+The packing technique can also be applied to the Todo-Aoki attack,
+assuming that we use 64-bit operations.  We can pack 2 FFTs with a very
+small error rate, using $s=31$.  Indeed, the values $b_j$ that we are
+computing are distributed like $Bin(2^{31},1/2)$, with expectation
+$2^{30}$ and standard deviation $2^{14.5}$.  Therefore, the
+probability to stay in a range of size $2^{31}$ is extremely high.
+However, if we try to pack 3 FFTs, we can use at most $s=15$, in order to
+keep $2s < 64-32$.  Unfortunately, the probability to stay in a range of
+size $2^{15}$ is too low.
+
+Therefore, the Todo-Aoki attack can be implemented with $2^{49.8}$
+64-bit additions rather than $2^{50.8}$ using the packing technique.
+Our attack is more than 20 times faster.
+
+\paragraph{Analysis of the partial sum attack with packing.}
+
+Since the partial sum attack does not use any FFT computation, the
+packing technique cannot be directly applied.  More generally, the attack is
+dominated by S-box computations and memory accesses.  S-box computations could be
+parallelized using a dedicated circuit to compute S-boxes in parallel (like the
+\texttt{AES-NI} instructions), but the memory accesses cannot be packed together
+efficiently because they depend on the S-box output. Hence, our attack is about 60 times faster in this setting.    

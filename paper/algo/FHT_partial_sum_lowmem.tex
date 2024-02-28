@@ -1,0 +1,62 @@
+\begin{algorithm}[t]
+    \begin{algorithmic}[1] % enter the algorithmic environment
+        \State Input: Array $A$ of bits such that the $j^\text{th}$ value of $A$ denotes the parity of ciphertext $j$
+        
+        \ForAll{$k_0$}
+            
+            \State Declare an empty 1D bit-array $A_0$ of size $2^{32}$; \Comment{$2^{32}$ memory}
+                \ForAll{$c_0, c_1, c_2, c_3$}
+                    \State $a_0 \gets S_0(c_0 \oplus k_0)$
+                    \State $A_0[a_0, c_1, c_2, c_3] \gets A[c_0, c_1, c_2, c_3]$
+                \EndFor
+            \State Declare an empty 2D bit-array $A_1$ of size $2^{8} \times 2^{24}$; \Comment{$2^{32}$ memory}
+            \ForAll{$c_2, c_3$}
+            \tcb{
+                \ForAll{$k_1, a_1$}
+                    \State 
+                         {$\displaystyle A_1[k_1][a_1, c_2, c_3] \gets 
+                        \bigoplus\limits_{\mathclap{a_0, c_1}} A_0[a_0, c_1, c_2, c_3]\cdot \indic(a_0 \oplus S_1(c_1 \oplus k_1) = a_1)$}
+                \EndFor
+                    }
+            \EndFor
+        \ForAll{$k_1$}
+            \State Declare an empty 2D bit-array $A_2$ of size $2^{8}\times2^{16}$;
+                \ForAll{$c_3$}
+                \tcb{
+                    \ForAll{$k_2, a_2$}
+                    \State 
+                    {$\displaystyle A_2[k_2][a_2,c_3] \gets 
+                        \bigoplus\limits_{\mathclap{a_1, c_2}} A_1[k_1][a_1, c_2, c_3]\cdot \indic(a_1 \oplus S_2(c_2 \oplus k_2) = a_2)$}
+                    \EndFor
+                }
+                \EndFor
+            \ForAll{$k_2$}
+                \State Declare an empty 2D bit-array $A_3$ of size $2^{8}\times 2^{8}$;
+                    \color{blue}
+                    \ForAll{$k_3, a_3$}
+                    \State 
+                    { $\displaystyle A_3[k_3][a_3] \gets 
+                        \bigoplus\limits_{\mathclap{a_2, c_3}} A_2[k_2][a_2,c_3]\cdot \indic(a_2 \oplus S_3(c_3 \oplus k_3) = a_3)$}
+                    \EndFor
+                    \color{black}
+                    \ForAll{$k_3$}
+                    \State Declare an empty 1D byte-array $A_4$ of size $2^{8}$;
+                        \color{red}
+                        \ForAll{$k_4$}
+                            \State {
+                            $\displaystyle A_4[k_4] \gets 
+                                \bigoplus\limits_{a_3} A_3[k_3][a_3]\cdot S^{-1}(a_3\oplus k_4)$}
+                        \EndFor
+                        \color{black}
+                       \ForAll{$k_4$}
+                            \If{$A_4[k_4] \neq 0$}
+                                \State {$k_0, k_1, k_2, k_3, k_4$} is not a valid key candidate
+                            \EndIf
+                       \EndFor
+                \EndFor
+            \EndFor
+        \EndFor
+    \EndFor
+    \end{algorithmic}
+\caption{Low-memory version of the attack.\label{alg:fht-lowmem}}
+\end{algorithm}

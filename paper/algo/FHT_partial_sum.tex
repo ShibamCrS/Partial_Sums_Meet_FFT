@@ -1,0 +1,57 @@
+\begin{algorithm}[t]
+    \begin{algorithmic}[1] % enter the algorithmic environment
+        \State Input: Array $\mathcal{X}$ of bits such that the $j-th$ value of $\mathcal{X}$ denotes the parity of ciphertexts $j$
+        
+        \State Declare an empty 2D bit-array $A[][]$ of size $2^{24}\times2^{16}$; \Comment{$2^{40}$ memory}
+         
+            \For{$c_3c_2a=0;c_3c_2a<2^{24};c_3c_2a=c_3c_2a+1$}
+            \tcb{
+                \For{ $k_1k_0=0;k_1k_0<2^{16};k_1k_0=k_1k_0+1$ }
+                    \State 
+                         {\tiny  $ \displaystyle A[c_3c_2a][k_1k_0] = 
+                        \sum_{ c_1c_0 \in \{0,2^{16}-1\} } \mathcal{X}_i[c_3c_2c_1c_0]\cdot \mathcal{I}(a = S_0(c_0 \oplus k_0) \oplus S_1(c_1 \oplus k_1) )$}
+                \EndFor
+                    }
+            \EndFor
+        \For{$k_1k_0 = 0; k_1k_0 < 2^{16}; k_1k_0 = k_1k_0 + 1$}
+            \State Declare an empty 2D bit-array $B[][]$ of size $2^{8}\times2^{16}$;
+                \For{$c_3=0;c_3<2^{8};c_3=c_3+1$}
+                \tcb{
+                    \For{ $k_2b=0;k_2b<2^{16};k_2b=k_2b+1$ }
+                    \State 
+                    {\tiny $B^{\prime}[i][c_3][k_2b] = 
+                        \sum_{ c_2a \in \{0,2^{16}-1\} } \mathcal{A}[i][k_1k_0][c_3c_2a]\cdot \mathcal{I}(a \oplus b = S_2(c_2 \oplus k_2))$}
+                    \EndFor
+                }
+                \EndFor
+            \For{$k_2 = 0; k_2 < 2^{8}; k_2 = k_2 + 1$}
+                \State Declare an empty 1D bit-array $\mathcal{C}[]$ of size $2^{16}$;
+                    \tcb{
+                    \For{ $k_3c=0;k_3c<2^{16};k_3c=k_3c+1$ }
+                    \State 
+                    { $\mathcal{C}[i][k_3c] = 
+                        \sum_{ c_3b \in \{0,2^{16}-1\} } \mathcal{B}[i][k_2][c_3b]\cdot \mathcal{I}(c \oplus b = S_3(c_3 \oplus k_3))$}
+                    \EndFor
+                    }
+                    \For{$k_3 = 0; k_3 < 2^{8}; k_3 = k_3 + 1$}
+                    \State Declare an empty 1D bit-array $\mathcal{S}[]$ of size $2^{8}$;
+                        \For{$i=0;i<d;i=i+1$} 
+                        \tcr{
+                            \For{ $k_4=0;k_4<2^{8};k_4=k_4+1$ }
+                            \State 
+                            $\mathcal{S}[k_4] = 
+                                \sum_{ c \in \{0,2^{8}-1\} } \mathcal{C}[k_3][c]\cdot S^{-1}(c\oplus k_4))$
+                            \EndFor
+                        }
+                       \EndFor
+                       \For{$k_4 = 0; k_4 < 2^{8}; k_4 = k_4 + 1$}
+                            \If{$\mathcal{S}[k_4] \neq 0$}
+                                \State $RK[k_4k_3k_2k_1k_0] = 1$
+                            \EndIf
+                       \EndFor
+                \EndFor
+            \EndFor
+        \EndFor
+    \end{algorithmic}
+\caption{The following is the Algorithm for key recovery. The function $\mathcal{I}$ is the indicator function. All the \tcb{blue} colored steps are of complexity $2^{16}\times2^{16}$ and can be replaced by a $3$ Hadamard transformations of size $2^{16}$ with total complexity $3 \times 2^{20}$. The \tcr{red} colored step has complexity $2^8 \times 2^8$, which can be replaced by $3$ Hadamard transformations of size $2^{8}$ with total complexity $3 \times 2^{11}$. Note that we need XOR of $8$ bit values from the last Hadamard transformation. Here I have used Gaetan's trick with \tcr{$7$} bit separation that needs exactly $64$ bits. \label{alg:fht}}
+\end{algorithm} 

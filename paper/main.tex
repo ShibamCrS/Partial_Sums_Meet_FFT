@@ -1,0 +1,82 @@
+% This is samplepaper.tex, a sample chapter demonstrating the
+% LLNCS macro package for Springer Computer Science proceedings;
+% Version 2.20 of 2017/10/04
+%
+\documentclass[runningheads]{llncs}
+%
+\usepackage{graphicx}
+\usepackage{xspace}
+%\usepackage{xcolor} 
+%\usepackage{tikz}
+\usepackage{diffpath}		% Custom LaTeX package to draw AES-like rounds
+\usepackage{multirow}
+\usepackage{amsmath, amssymb}
+\usepackage{mathtools}
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
+\usepackage{nicefrac}
+\usepackage{enumitem}
+\usepackage{microtype}
+
+\usepackage{url}
+\usepackage{doi}
+\let\doisave\doi  % Save \doi command from package doi
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,citecolor=black!70!green,linkcolor=black!70!red}
+
+\input{macros}
+
+\begin{document}
+
+\let\doi\doisave % Restore \doi command (overwritten by llncs at begin{document})
+
+
+\title{Partial Sums Meet FFT: Improved Attack on 6-Round AES}
+\author{~}
+\institute{~}
+\author{
+ Orr Dunkelman\inst{1} \and Shibam Ghosh\inst{1} \and Nathan Keller\inst{2} \and \\ Gaetan Leurent\inst{3} \and Avichai Marmor\inst{2} \and Victor Mollimard\inst{1}
+}
+
+
+\institute{
+Computer Science Department, University of Haifa, Haifa, Israel \email{orrd@cs.haifa.ac.il, sghosh03@campus.haifa.ac.il, victor.mollimard@gmail.com} \and
+Department of Mathematics, Bar Ilan University, Ramat Gan, Israel \email{Nathan.Keller@biu.ac.il, avichai@elmar.co.il} \and
+Inria, Paris, France \email{gaetan.leurent@inria.fr}
+}
+
+
+\authorrunning{O.~Dunkelman \etal}
+
+\maketitle              % typeset the header of the contribution
+
+%\vspace{-1.8cm}
+\begin{abstract}
+The \emph{partial sums} cryptanalytic technique was introduced in 2000 by Ferguson et al., who used it to break 6-round AES with time complexity of $2^{52}$ S-box computations -- a record that has not been beaten ever since. In 2014, Todo and Aoki showed that for 6-round AES, partial sums can be replaced by a technique based on the Fast Fourier Transform (FFT), leading to an attack with a comparable complexity.
+
+In this paper we show that the partial sums technique can be combined with an FFT-based technique, to get the best of the two worlds. Using our combined technique, we obtain an attack on 6-round AES with complexity of about $2^{46.4}$ additions. We fully implemented the attack experimentally, along with the partial sums attack and the Todo-Aoki attack, and confirmed that our attack improves the best known attack on 6-round AES by a factor of more than 32.
+
+We expect that our technique can be used to significantly enhance numerous attacks that exploit the partial sums technique. To demonstrate this, we use our technique to improve the best known attack on 7-round Kuznyechik by a factor of more than 80.
+\end{abstract}
+
+\input{introduction}
+
+\input{background}
+
+\input{new_attack}
+
+\input{aes_attack}
+
+\input{other_cipher}
+
+\input{summary}
+\subsection*{Acknowledgements}
+The research was conducted in the framework of the workshop `New directions in the cryptanalysis of AES', supported by the European Research Council under the ERC starting grant agreement n.~757731 (LightCrypt). The authors thank all the participants of the workshop for valuable discussions and suggestions.
+
+The first, second and sixth authors were supported in part by the Center for Cyber, Law, and Policy in conjunction with the Israel National Cyber Directorate in the Prime Minister’s Office and by the Israeli Science Foundation through grants No. 880/18 and 3380/19. The third and the fifth authors were supported by the European Research Council under the ERC starting grant agreement n.~757731 (LightCrypt) and by the BIU Center for Research in Applied Cryptography and Cyber Security in conjunction with the Israel National Cyber Bureau in the Prime Minister's Office.
+The fourth author is partially supported by ANR grants  ANR-20-CE48-001 and ANR-22-PECY-0010.
+
+\bibliographystyle{splncs04}
+\bibliography{biblio/abbrev3, biblio/crypto, biblio/biblio}
+\end{document}
+

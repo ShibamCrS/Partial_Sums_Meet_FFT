@@ -1,0 +1,57 @@
+% for comments: 
+\newcommand{\TB}[1]{\textcolor{cyan}{[{\bf Tim:} #1]}}
+\newcommand{\OD}[1]{\textcolor{Blue}{[{\bf Orr:} #1]}}
+\newcommand{\SG}[1]{\textcolor{teal}{[{\bf Shibam:} #1]}}
+\newcommand{\IH}[1]{\textcolor{gray}{[{\bf Itamar:} #1]}}
+\newcommand{\NK}[1]{\textcolor{green}{[{\bf Nathan:} #1]}}
+\newcommand{\GL}[1]{\textcolor{violet}{[{\bf Gaetan:} #1]}}
+\newcommand{\AM}[1]{\textcolor{purple}{[{\bf Avichai:} #1]}}
+\newcommand{\VM}[1]{\textcolor{orange}{[{\bf Victor:} #1]}}
+
+\newcommand{\TODO}[1]{{\color{red}{{\bf TODO:} #1}}}
+
+% latin expression:
+\newcommand{\etal}{{et al.}\xspace}
+\newcommand{\ie}{{i.e.}\xspace}
+\newcommand{\eg}{{e.g.}\xspace}
+
+% recurrent symbols/name...
+\newcommand{\GF}{\mathbb{F}_2}
+\newcommand*{\boldone}{\text{\usefont{U}{bbold}{m}{n}1}}
+\newcommand{\indic}{\boldone}
+%\usepackage{bbm}
+%\newcommand{\indic}{\mathbbm{1}}
+% ciphers
+\newcommand{\AES}{\texttt{AES}\xspace}
+\newcommand{\sAES}{\texttt{small-AES}\xspace}
+\newcommand{\MISTY}{\texttt{MISTY1}\xspace}
+
+% aes subfunctions
+\newcommand{\ak}{\textsc{AddRoundKey}\xspace}
+\newcommand{\subB}{\textsc{SubBytes}\xspace}
+\newcommand{\sr}{\textsc{ShiftRows}\xspace}
+\newcommand{\mc}{\textsc{MixColumns}\xspace}
+
+%Colors (used by Shibam)
+\newcommand{\tcr}{\textcolor{red}}
+\newcommand{\tcb}{\textcolor{blue}}
+\newcommand{\tcg}{\textcolor{green}}
+
+%Hexadecimal constants (field elements)
+\newcommand{\hex}[1]{\ensuremath{\mathtt{#1}_{\mathsf{x}}}}
+
+%computation for the test
+%\newcommand{\pricePartial}{497.23\xspace} %in dollar
+%\newcommand{\priceFFT}{418.08\xspace} %in dollar
+%\newcommand{\priceOur}{6.656\xspace} %in dollar
+%\newcommand{\timePartial}{4859\xspace} %in minutes
+\newcommand{\pricePartial}{497\xspace} %in dollar
+\newcommand{\priceFFT}{418\xspace} %in dollar
+\newcommand{\priceOur}{5\xspace} %in dollar
+\newcommand{\timePartial}{4859\xspace} %in minutes
+\newcommand{\timeFFT}{3120\xspace} %in minutes
+\newcommand{\timeOur}{48\xspace} %in minutes
+\newcommand{\speedup}{65\xspace} % minimal speed-up in real time between our method compared to FFT and original partial sum
+%\newcommand{\cheapup}{62.8\xspace} % minimal speed-
+\newcommand{\cheapup}{83\xspace} % minimal speed-
+% not include in the conclusion

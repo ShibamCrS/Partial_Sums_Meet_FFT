@@ -1,0 +1,261 @@
+\section{The New Technique: Partial Sums Meet FFT}\label{sec:new_attack}
+
+In this section, we describe our new technique which allows combining the advantages of the partial sums technique with those of the Todo-Aoki FFT-based technique. We begin with a basic variant of the technique in Section~\ref{sec:sub:basic}, then we show how the complexity can be reduced significantly by packing several FFT computations together in Section~\ref{sec:sub:packing}, afterward, we present several additional enhancements and other variants of the basic technique in Section~\ref{sec:sub:improvements}, and we conclude this section with a comparison of our technique with partial sums and the Todo-Aoki technique in Section~\ref{sec:sub:comparison}. For the sake of concreteness, we present the attack in the case of 6-round AES and reuse the notations of Section~\ref{sec:background}. It will be apparent from the description how our technique can be applied in general.
+
+\subsection{The Basic Technique}\label{sec:sub:basic}
+
+Our basic observation is that we can follow the general structure of the partial sums attack, and replace each step by computing a convolution of properly chosen functions. This is shown in Algorithm~\ref{alg:fht-basic} which is a rearrangement of the operations of Algorithm~\ref{alg:partial-sum}, making convolution appear. As we use somewhat different convolutions for different steps of the attack, we present them separately.  
+
+\subsubsection{First step.} As described in Section~\ref{sec:sub:partial-sums}, before the first step of the partial sums attack, the list of ciphertexts is replaced with a list $A$ of $2^{32}$ binary indices which indicate whether each of the $2^{32}$ possible values of the bytes $c_0,c_1,c_2,c_3$ appears an even or an odd number of times in the list of ciphertexts. At the first step, the adversary guesses the bytes $k_0,k_1$, and replaces the list by a list $A_1$ of size $2^{24}$ which corresponds to the bytes $a_1,c_2,c_3$, where $a_1 = S_0(c_0 \oplus k_0) \oplus S_1(c_1 \oplus k_1)$. 
+
+We observe that the list $A_1$ can be computed for all values $k_0,k_1$ simultaneously by computing a convolution. Let $\chi:\{0,1\}^{32} \to \{0,1\}$ be the indicator function of the list $A$. That is, $\chi(c_0,c_1,c_2,c_3)=1$ if and only if the value $(C_0,C_7,C_{10},C_{13})=(c_0,c_1,c_2,c_3)$ appears an odd number of times in the list of ciphertexts. For any $c_2,c_3 \in \{0,1\}^8$, define
+$
+\chi^1_{c_2,c_3}(c_0,c_1)=\chi(c_0,c_1,c_2,c_3).
+$
+
+\noindent For any $a_1 \in \{0,1\}^8$, let $I^1_{a_1}(x,y)=\indic(S_0(x) \oplus S_1(y) = a_1).$
+Both $\chi^1_{c_2,c_3}$ and $I^1_{a_1}$ are indicator functions on $\{0,1\}^{16}$. For any $a_1,c_2,c_3 \in \{0,1\}^8$, we have
+\begin{align*}
+    (\chi^1_{c_2,c_3} * I^1_{a_1})(k_0,k_1) &= \sum_{\mathclap{c_0,c_1 \in \{0,1\}^8}} \chi^1_{c_2,c_3}(c_0,c_1) \cdot I^1_{a_1}(c_0 \oplus k_0,c_1 \oplus k_1) \\
+    &= \sum_{\mathclap{c_0,c_1 \in \{0,1\}^8}} \chi(c_0,c_1,c_2,c_3) \cdot \indic(S_0(c_0 \oplus k_0) \oplus S_1(c_1 \oplus k_1) = a_1).
+\end{align*}
+Therefore, the entry which corresponds to $(a_1,c_2,c_3)$ in the list $A_1[k_0, k_1]$ created for the subkey guess $(k_0,k_1)$ is 
+\begin{align}
+    A_1[k_0, k_1][a_1,c_2,c_3]=\left((\chi^1_{c_2,c_3} * I^1_{a_1})(k_0,k_1)\right) \bmod 2.
+\end{align}
+(Note that formally, we define $A_1$, which is a list of size $2^{24}$ that depends on two key bytes, as an array of size $2^{16} \times 2^{24}$ which includes the guessed bytes.) As was shown in Section~\ref{sec:sub:FFT-old}, the computation of this convolution requires $3 \cdot 16 \cdot 2^{16}$ addition operations for each value of $a_1,c_2,c_3$, or a total of $48 \cdot 2^{40}$ additions. This compares favorably with the first step of the partial sums attack which requires $2^{48}$ S-box computations. As we shall see below, the actual advantage of our technique is significantly larger. However, this requires to store the full $A_1$ for all values of $(k_0,k_1)$, of size $2^{40}$ bits.
+
+\subsubsection{Second step.} At the second step of the partial sums attack, the adversary guesses the byte $k_2$ and reduces the list $A_1$ to a list $A_2$ of size $2^{16}$ that corresponds to the possible values of $(a_2,c_3)$, where $a_2 = a_1 \oplus S_2(c_2 \oplus k_2)$. 
+
+We compute the entries of the list $A_2$ using a convolution, as follows. For any $k_0,k_1,c_3 \in \{0,1\}^8$, define
+\begin{align*}
+\chi^2_{k_0,k_1,c_3}(a_1,c_2) &= \indic(A_1[k_0, k_1][a_1,c_2,c_3]) &
+I^2(x,y) &= \indic(x=S_2(y)).
+\end{align*}
+Both $\chi^2_{k_0,k_1,c_3}$ and $I^2$ are indicator functions on $\{0,1\}^{16}$. For any $k_0,k_1,c_3 \in \{0,1\}^8$, we have
+\begin{align*}
+    (\chi^2_{k_0,k_1,c_3} * I^2)(a_2,k_2) &= \sum_{\mathclap{a_1,c_2 \in \{0,1\}^8}} \chi^2_{k_0,k_1,c_3}(a_1,c_2) \cdot I^2(a_1 \oplus a_2,c_2 \oplus k_2) \\
+    &= \sum_{\mathclap{a_1,c_2 \in \{0,1\}^8}} \indic(A_1[k_0, k_1][a_1,c_2,c_3]) \cdot \indic(a_1 \oplus a_2 = S_2(c_2 \oplus k_2))\\
+    &= \sum_{\mathclap{a_1,c_2 \in \{0,1\}^8}} \indic(A_1[k_0, k_1][a_1,c_2,c_3]) \cdot \indic(a_2 = a_1 \oplus S_2(c_2 \oplus k_2)).
+\end{align*}
+Therefore, the entry which corresponds to $(a_2,c_3)$ in the list $A_2$ created for the subkey guess $(k_0,k_1,k_2)$ is 
+\begin{align}
+    A_2[k_2][a_2,c_3]=\left((\chi^2_{k_0,k_1,c_3} * I^2)(a_2,k_2)\right) \bmod 2.
+\end{align}
+(Note that formally, we define $A_2$, which is a list of size $2^{16}$ that depends on three key bytes, as an array of size $2^{8} \times 2^{16}$, which depends on $k_0,k_1$). As above, the complexity of this step is $48 \cdot 2^{40}$ additions.
+
+\subsubsection{Third step.} This step is similar to the second step. Thus, we present it briefly.
+At the third step of the partial sums attack, the adversary guesses the byte $k_3$ and reduces the list $A_2$ to a list $A_3$ of size $2^{8}$ that corresponds to the possible values of $a_3$, where $a_3 = a_2 \oplus S_3(c_3 \oplus k_3)$. We obtain the list $A_3$ by defining
+$$
+\chi^3_{k_0,k_1,k_2}(a_2,c_3) = \indic(A_2[k_2][a_2,c_3]) \qquad \mbox{and} \qquad I^3(x,y) = \indic(x=S_3(y)),
+$$
+and setting
+\begin{align}
+    A_3[k_3][a_3]=\left((\chi^3_{k_0,k_1,k_2} * I^3)(a_3,k_3)\right) \bmod 2.
+\end{align}
+(Note that formally, we define $A_3$ as an array of size $2^{8} \times 2^8$, which depends on $k_0,k_1,k_2$). As above, the complexity of this step is $48 \cdot 2^{40}$ additions.
+
+\subsubsection{Fourth step.} At the fourth step of the partial sums attack, the adversary guesses the byte $k_4$, and computes $\oplus_{\{x \in \{0,1\}^8:A_3[x]=1\}} S^{-1}(k_4 \oplus x)$, which is equal to the right hand side of~\eqref{Eq:Square2}, and checks whether it is equal to zero. 
+
+We cannot compute this XOR directly using a convolution, since in order to apply the FFT we need functions whose output is an integer and not an element of $GF(2^8)$. A basic solution, that was adopted by Todo and Aoki~\cite{CANS:TodAok14}, is to compute the XOR in each bit separately. To this end, we define the functions $\chi^4_{k_0,k_1,k_2,k_3},I^{4,j}:\{0,1\}^8 \to \{0,1\}$ for $j=0,1,\ldots,7$ by
+$$
+\chi^4_{k_0,k_1,k_2,k_3}(a_3) =1(A_3[k_3][a_3]) \qquad \mbox{and} \qquad I^{4,j}(x)=[S^{-1}(x)]_j,
+$$
+where $[S^{-1}(x)]_j$ denotes the $j$'th bit of $S^{-1}(x)$. We have
+\begin{align*}
+        (\chi^4_{k_0,k_1,k_2,k_3} * I^{4,j})(k_4) &= \sum_{\mathclap{a_3 \in \{0,1\}^8}} \chi^4_{k_0,k_1,k_2,k_3}(a_3) \cdot I^{4,j}(a_3 \oplus k_4) \\
+        &= \sum_{\mathclap{a_3 \in \{0,1\}^8}} \indic(A_3[k_3][a_3]) \cdot [S^{-1}(a_3 \oplus k_4)]_j.
+\end{align*}
+Therefore, the $j$'th bit of the XOR we would like to compute for the key guess $(k_0,k_1,k_2,k_3,k_4)$ is equal to 
+\begin{equation}\label{Eq:New1}
+\left((\chi^4_{k_0,k_1,k_2,k_3} * I^{4,j})(k_4)\right)\bmod 2.
+\end{equation}
+Hence, we can check the XOR by initializing a list of $2^{40}$ binary indicators which correspond to the possible values of $(k_0,k_1,k_2,k_3,k_4)$, computing the convolutions $\chi^4_{k_0,k_1,k_2,k_3} * I^{4,j}$ for $j=0,1,\ldots,7$, and discarding all keys $(k_0,k_1,k_2,k_3,k_4)$ for which at least one of the results of~\eqref{Eq:New1} is not equal to zero modulo 2.
+
+The complexity of this step is $2^{32} \cdot 8 \cdot (3 \cdot 8 \cdot 2^8) = 192 \cdot 2^{40}$ additions, which is slightly better than the complexity of the fourth step of the partial sums technique. As we shall show below, the complexity can be reduced significantly, by using a new method to pack several FFT together, and exploiting enhancements from previous attacks based on the re-use of computations.
+
+\input{algo/FHT_partial_sum_basic.tex}
+
+\subsection{Packing Several FFTs Together by Embedding into $\mathbb{Z}$}
+\label{sec:sub:packing}
+
+We now show that the complexity of the basic attack can be significantly reduced by packing several convolution computations into a single convolution.  We assume that the attack is implemented using 64-bit operations, which is typical for a software implementation.  For reference, the 6-round AES attack of Todo and Aoki requires 64-bit additions to avoid overflow.
+
+\subsubsection{Improving the fourth step of the attack.} Consider the fourth step of our basic attack described above. The step consists of computing the convolution of the function $\chi^4_{k_0,k_1,k_2,k_3}$ with the eight functions $I^{4,j}$ ($j=0,1,\ldots,7$). These eight convolutions can be replaced by a single computation of convolution. 
+
+Let $s$ be a `separation parameter' that will be determined below, and define a function $I^4:\{0,1\}^8 \to \mathbb{Z}$ by
+$
+I^4(x) = \sum_{j=0}^7 2^{js} [S^{-1}(x)]_j.
+$
+
+We claim that for an appropriate choice of $s$, the convolution $\chi^4_{k_0,k_1,k_2,k_3} * I^{4}$ allows recovering the value of the XOR in all 8 bits we are interested in, with a high probability. Indeed, we have
+
+\begin{align*}
+      (\chi^4_{k_0,k_1,k_2,k_3} * I^{4})(k_4) &= \sum_{\mathclap{a_3 \in \{0,1\}^8}} \chi^4_{k_0,k_1,k_2,k_3}(a_3) \cdot I^{4}(a_3 \oplus k_4) \\
+      &=  \sum_{\mathclap{a_3 \in \{0,1\}^8}} \indic(A_3[k_3][a_3]) \cdot \sum_{j=0}^7 2^{sj} [S^{-1}(a_3 \oplus k_4)]_j \\
+      &=\sum_{j=0}^7 2^{sj} \sum_{a_3 \in \{0,1\}^8} \indic(A_3[k_3][a_3]) \cdot [S^{-1}(a_3 \oplus k_4)]_j \\ 
+      &=  \sum_{j=0}^7 2^{sj} (\chi^4_{k_0,k_1,k_2,k_3} * I^{4,j})(k_4), 
+\end{align*}
+where the penultimate equality uses the change of the order of summation. 
+
+Recall that for each value of $k_4$, we want to compute the eight parity bits 
+$(\chi^4_{k_0,k_1,k_2,k_3} * I^{4,j}(k_4))\bmod 2$. Let us reformulate our goal, for the sake of convenience. Denoting $b_j=\chi^4_{k_0,k_1,k_2,k_3} * I^{4,j}(k_4)$, we have $\chi^4_{k_0,k_1,k_2,k_3} * I^{4}(k_4)=\sum_{j=0}^7 2^{sj}b_j$. Thus, for non-negative integers $b_0,b_1,\ldots,b_7$, we are given $\sum_{j=0}^7 2^{sj}b_j$ and we want to compute from it the eight parity bits $(b_j)\bmod 2$. 
+
+Observe that if for all $0 \leq j \leq 7$, we have $b_j<2^s$, then the multiplications by $2^{sj}$ separate the values $b_j$, and thus, we can simply read the values $(b_j)\bmod 2$ from $2^{sj}b_j$, as in this case,
+$$
+\forall j: \left[\sum_{j=0}^7 2^{sj}b_j\right]_{sj} = [2^{sj}b_j]_{sj} = (b_j)\bmod 2.
+$$
+\paragraph{How large should $s$ be so that $b_j<2^s$ holds with a high probability for all $j$'s?} Note that each $b_j$ is the sum of 128 elements, which correspond to the 128 values of $c_3$ such that $[S^{-1}(c_3 \oplus k_4)]_j=1$. Each such element is $\chi^4_{k_0,k_1,k_2,k_3}(c_3)$, which can be viewed as a randomly distributed indicator. Hence, $b_j$ is distributed like $Bin(128,1/2)$. The expectation of such a variable is 64, and its standard deviation is $4\sqrt{2}$. This means that the values $b_j$ are strongly concentrated around 64, and the probability $\Pr[b_j\geq 2^7]$ is extremely small. Therefore, by taking $s=7$, we can derive the eight parity bits $(b_j)\bmod 2$ from the sum $\sum_{j=0}^7 2^{sj}b_j$, easily and with a very low error probability.
+\paragraph{How small should $s$ be in order to perform the entire computation with 64-bit words?} For the sake of efficiency, we compute the convolution using 64-bit word operations and disregard overflow beyond the $64$'th bit. If $s$ is too large, this may cause an error in the computation of the sum $\sum_{j=0}^7 2^{sj}b_j$, and consequently, in the computation of the parity bits $(b_j)\bmod 2$. 
+
+To overcome this, note that in the computation of a convolution of $f,g:\{0,1\}^n \to \mathbb{Z}$, all operations are additions and multiplications, except for division by $2^n$ at the last step. Hence, when we neglect overflow beyond the $64$'th bit, this causes an additive error of $m \cdot 2^{64}$ for some $m \in \mathbb{Z}$ until the last step, and an additive error of $m \cdot 2^{64-n}$ at the final result. Assuming that $b_j<2^{s}$ for all $j$, this error does not affect the parity bits as long as $7s<64-n$ (as the error affects only the top $n$ bits of $\sum_{j=0}^7 2^{sj}b_j$). 
+
+In our case, $n=8$ and hence, for all $s \leq 7$, the possible error does not affect the parity bits we compute.
+
+\paragraph{Reducing $s$ even further.} Note that we can allow random errors in the convolution computations that do not correspond to the right subkey guess, as such random errors do not increase the probability of a wrong key guess to pass the filtering. Hence, we only have to make sure that for the right key, we obtain the correct value of the parity bits with a high probability.
+
+As was explained above, the values $b_j$ are concentrated around 64.
+Formally, by evaluating the cumulative distribution function of the binomial law, we have $\Pr[48 < b_j < 80] >0.99$, and thus, $0<b_j-48<2^5$ with a very high probability.
+To make use of this concentration, we subtract from the value  $\sum_{j=0}^7 2^{sj}b_j$ the integer $u=48\sum_{j=0}^7 2^{sj}$, to obtain 
+$$
+\sum_{j=0}^7 2^{sj}b_j - \sum_{j=0}^7 48 \cdot 2^{sj} = \sum_{j=0}^7 (b_j-48)2^{sj}. 
+$$
+Since $0<b_j-48<2^5$, we can compute the parity bits $(b_j)\bmod 2$ also for $s=6$ and for $s=5$, with a very low error probability.
+\paragraph{Summary of improving the fourth step.} To summarize, the eight convolutions can be computed using a single convolution of functions over $\{0,1\}^8$. This reduces the complexity of this step to $2^{32} \cdot 3 \cdot 8 \cdot 2^8 = 24 \cdot 2^{40}$ operations.
+
+\subsubsection{Improving the other steps of the attack.} Once we acquired the ability to compute several convolutions in parallel, we can use it at the other steps of the attack as well. The idea is to pack the convolutions that correspond to several subkey guesses into a single convolution. We exemplify this approach by showing how the first step of the attack can be improved; the improvement of the second and the third steps is similar. 
+
+Recall that at the first step of our attack, for any values $c_2,c_3 \in \{0,1\}^8$, we compute the parity of the convolution
+$(\chi^1_{c_2,c_3} * I^1_{a_1})(k_0,k_1)$, for all $k_0,k_1 \in \{0,1\}^8$. We may pack up to seven such computations in parallel. For example, in order to pack four computations, we write $c_2=(c_2^h,c_2^l)$, where $c_2^h$ denotes the two most significant bits of $c_{2}$ and is identified with an integer between 0 and 3, via the binary expansion. We define
+$$
+\chi^1_{c_2^h,c_2^l,c_3}(c_0,c_1)=\chi(c_0,c_1,c_2,c_3), \text{ and } \bar{\chi}^{1}_{c_2^l,c_3}=\sum_{j=0}^3 2^{sj} \chi^1_{j,c_2^l,c_3}.
+$$
+
+Then, for any $c_2^l \in \{0,1\}^6$, and $k_0,k_1,c_3 \in \{0,1\}^8$, we compute the convolution
+$(\bar{\chi}^1_{c_2^l,c_3} * I^1_{a_1})(k_0,k_1)$, and using the technique described above we derive from it the four parity bits $((\chi^1_{c_2,c_3} * I^1_{a_1})(k_0,k_1)) \bmod 2$ with $c_2 \in \{(0, c_2^l), \ldots, (3,c_2^l)\}$.
+
+To see what is the maximal value of $s$ we may take, note that each convolution value $b'=(\chi^1_{c_2,c_3} * I^1_{a_1})(k_0,k_1)$ is the sum of 256 elements, which correspond to the 256 values of $(c_0,c_1)$ such that $S_0(c_0 \oplus k_0) \oplus S_1(c_1\oplus k_1)=a_1$. Each such element can be viewed as a randomly distributed indicator. Hence, $b'$ is distributed like $Bin(256,1/2)$.  When analyzing step 4, we could tolerate a low probability of errors for the right key, but in the first step, there are $2^{24}$ values of $A_1$ that are involved in the computation for the right key, and we want all of them to be correct.  Therefore, we use $s \ge 7$, since $\Pr[64<b'<192]>1-2^{-50}$.
+Hence, by subtracting $64 \cdot \sum_{j=0}^3 2^{js}$ from the convolution value $(\bar{\chi}^1_{c_2^l,c_3} * I^1_{a_1})(k_0,k_1)$, we can compute the parity bits $\left((\chi^1_{c_2,c_3} * I^1_{a_1})(k_0,k_1)\right) \bmod 2$ with a very high probability for $s \geq 7$, and the $2^{24}$ relevant values are simultaneously correct with probability at least $1-2^{-26}$.
+
+Unfortunately, with $s = 7$ we can only pack 7 parallel convolutions within 64-bit words.  Indeed, at this step, the convolution is computed for functions over $\{0,1\}^{16}$ (instead of 8-bit functions in the fourth step), and thus, we would need $7s<64-16=48$ in order to pack 8 FFTs and avoid errors due to overflow. 
+(We exemplified the idea of packing 4 parallel convolutions for the sake of convenience).
+
+This reduces the complexity of the first step of the attack from $2^{24} \cdot 3 \cdot 16 \cdot 2^{16} = 48 \cdot 2^{40}$ to $48/7 \cdot 2^{40}$ addition operations. The complexity of the second step can be reduced similarly from $48 \cdot 2^{40}$ to $48/7 \cdot 2^{40}$.  For the third step, we can actually use $s=6$ and pack 8 parallel convolutions within a 64-bit word, because we only need $2^8$ correct computations, and we have $\Pr[96<b'<160]^{256}>0.98$; the complexity is reduced from $48 \cdot 2^{40}$ to $6 \cdot 2^{40}$.
+
+\subsubsection{Improving the fourth step even further.} Finally, we can reduce the complexity of the fourth step even further by packing 12 FFTs in a 64-bit word with $s=5$. This requires to change the way we do the packing: instead of packing 8 different $I^{4,j}$ with a fixed $\chi^4$ as was described above, we consider each function $I^{4,j}$ separately and pack a fixed $I^{4,j}$ with 12 $\chi^4$ functions corresponding to different key guesses. This reduces the complexity of the fourth step from $24 \cdot 2^{40}$ to $16 \cdot 2^{40}$.
+
+\subsection{Enhancements and Other Variants of the Basic Technique}
+\label{sec:sub:improvements}
+
+In this section, we present two enhancements that reduce the complexity of the attack, along with another variant of the technique that provides us with flexibility that will be useful in the application of our technique to other ciphers.
+
+\subsubsection{Precomputing some of the FFT computations.} At each step of the attack, we perform three FFT computations. As was described in Section~\ref{sec:sub:FFT-old} regarding the FFT-based attack of Todo and Aoki, some of these computations do not depend on the guessed key material, and hence, they can be precomputed at the beginning of the attack, thus reducing the overall time complexity. 
+
+Specifically, the functions $I^2,I^3,I^4,$ and $I^1_{a_1}$ (for all $a_1 \in \{0,1\}^8)$ do not depend on any guessed subkey bits, and thus, their FFTs can be precomputed with overall complexity of about $2^8 \cdot 16 \cdot 2^{16}=2^{28}$ addition operations, which is negligible compared to other steps of the attack. The results can be stored in lists that require about $2^{24}$ 64-bit words of memory.
+
+The function $\chi^1_{c_2,c_3}$ does not depend on the value of $a_1$, and thus, its FFT can be computed once (for each value of $(c_2,c_3)$) and reused for all values of $a_1$. This reduces the time complexity of this FFT computation (in total, for all values of $c_2,c_3$) to $2^{16} \cdot 16 \cdot 2^{16}=2^{36}$ additions, which is negligible compared to other steps of the attack. As we need to store in memory at each time only the result of the FFT that corresponds to a single value of $c_2,c_3$, the memory requirement of this step is $2^{16}$ 64-bit words of memory. 
+
+These precomputations reduce the time complexity of the first step (in which two FFTs can be precomputed) from $48/7 \cdot 2^{40}$ to $16/7 \cdot 2^{40}$ additions, the time complexity of the second, third, and fourth steps (in which one FFT can be precomputed) to $32/7 \cdot 2^{40}, 4 \cdot 2^{40},$ and $32/3 \cdot 2^{40}$ additions, respectively. 
+
+If the fourth step is implemented by packing 12 $\chi^4$ functions together, as was described above, we can reduce its complexity further by precomputing the FFT of the function $\bar{\chi}^4$ which represents the `packed' function and reusing it for computing convolutions with the eight functions $I^{4,j}$ ($j=0,1,\ldots,7$). This reduces the time complexity of the fouth step to $(16+(16/8))/3 \cdot 2^{40} = 6 \cdot 2^{40}$ additions.
+
+Therefore, the time complexity of examining a set of $2^{32}$ plaintexts is reduced to $2^{40} \cdot (16/7+32/7+4+6) \approx 16.9 \cdot 2^{40} \approx 2^{44.1}$ additions. 
+
+\subsubsection{Lower cost for examining additional sets of plaintexts.} As was described in Section~\ref{sec:sub:partial-sums} regarding the partial sums attack, when we check the XOR of additional sets of $2^{32}$ values at a byte which we already checked for one set, the complexity of the check is reduced. Indeed, after the first set was checked, we expect that for each value of $(k^5_0,k^5_7,k^5_{10},k^5_{13})$, only a few values of $\bar{k}^4_0$ are not discarded. Hence, instead of performing the fourth step of the attack by computing a convolution, we can simply compute the sum directly for each of the remaining candidate subkeys. The average complexity of such a step is $2^{32} \cdot 1 \cdot 2^{7}=2^{39}$ S-box evaluations and the same number of XORs, which is equivalent to about $1 \cdot 2^{40}$ addition operations. Note that since the fourth step is the most time consuming step of our attack, this gain is more significant than the gain which the partial sums attack achieves in the same case.
+
+After two sets were checked, we expect that for each value of $(k^5_0,k^5_7,k^5_{10})$, only a few values of $(k^5_{13},\bar{k}^4_0)$ are not discarded. Hence, instead of performing the third and the fourth steps of the attack by computing convolutions, we can simply directly perform each of them for each of the remaining candidate subkeys. This reduces the complexity of the third step to $2^{40}$ additions and the complexity of the fourth step to $2^{32}$ additions.
+
+\paragraph{Attack that examines six sets of $2^{32}$ plaitexts.} By continuing the reasoning in the same manner, we see that the complexity of considering six sets of $2^{32}$ ciphertexts and computing the XOR of the values $x^4_0$ that correspond to them, is about
+\[
+\begin{gathered}
+2^{40}\cdot\left(\left(\frac{16+32}{7}+4+6\right)+\left(\frac{16+32}{7}+4+1\right)+\left(\frac{16+32}{7}+1\right)+\left(\frac{16}{7}+1\right)+1\right) \\ \approx 40.8 \cdot 2^{40} \approx 2^{45.4} \text{ additions.} 
+\end{gathered}
+\]
+
+
+\paragraph{Attack that examines two sets of $2^{32}$ plaitexts.} If we consider two sets of $2^{32}$ ciphertexts and examine 4 different bytes (as was suggested by Tunstall~\cite{Tunstall12} for the partial sums attack), then we may begin with checking the XOR of both sets at the byte $x^4_{0}$, which requires $2^{40}(16.9+11.9)$ additions as was described above. Then, we must move to another byte, and it seems that we have to pay a `full price' again. However, note that after the first two filterings, for each value of $(k^5_0,k^5_7,k^5_{10})$ we are left with one value of $k^5_{13}$ on average. As these four subkey bytes are reused in the examination of the XOR in the byte $x^4_5$ (along with a different byte from $\bar{k}^4$), we can replace the third step by computing the sum directly for each remaining value of $k^5_{13}$ and replace the fourth step by computing the sum directly for each remaining value of $(k^5_{13},\bar{k}^4_1)$. This reduces the complexity of each of these two steps to $2^{40}$ additions. When we examine the second set of $2^{32}$ ciphertexts at the byte $x^4_5$, the complexity of the fourth step can be further reduced to $2^{32}$ additions, since for any value of $(k^5_0,k^5_7,k^5_{10})$ we are left with one value of $(k^5_{13},\bar{k}^4_1)$ on average.   
+
+Continuing in the same manner, we see that the complexity of considering two sets of $2^{32}$ ciphertexts and computing the XOR of the values $x^4_{0,5,10,15}$ that correspond to them, is about
+\[
+\begin{gathered}
+2^{40}\cdot\Big(\left(\frac{16+32}{7}+4+6\right)+\left(\frac{16+32}{7}+4+1\right)+
+\left(\frac{16+32}{7}+1+1\right)+\\ \left(\frac{16+32}{7}+1\right)+
+\left(\frac{16}{7}+1\right)+\left(\frac{16}{7}+1\right)+
+1\Big) \approx 62.8 \cdot 2^{40} \approx 2^{46} \text{ additions.}
+\end{gathered}
+\]
+
+
+\paragraph{Attack that examines one set of $2^{32}$ plaintexts.} As was explained in Section~\ref{sec:sub:partial-sums}, in this case we examine each byte with only a single set of ciphertexts, and thus, we do not obtain information that can be reused in other computations. Therefore, the complexity of our attack in this case is $16 \cdot 16.9 \cdot 2^{40} = 2^{48.1}$ addition operations, which is 16 times the complexity of checking a single set of ciphertexts (like in the partial sums and the Todo-Aoki attacks with only a single set of $2^{32}$ ciphertexts examined). 
+
+\subsubsection{Alternative Way of Performing the First Step.} Recall that at the first step we are given a list $A$ of $2^{32}$ binary indices which correspond to $(c_0,c_1,c_2,c_3)$ and our goal is to compute the $2^{24}$ entries of the list $A_1$ which corresponds to triples of the form $(a_1,c_2,c_3)$ where $a_1 = S_0(c_0 \oplus k_0) \oplus S_1(c_1 \oplus k_1)$, for all values of $(k_0,k_1)$. We may divide this step into two sub-steps as follows:
+\begin{itemize}
+    \item \emph{Step~1.1:} At this sub-step, we guess the subkey $k_0$ and update the list $A$ into a list $A_0$ of $2^{32}$ binary indices that correspond to $(a_0,c_1,c_2,c_3)$, where $a_0=S_0(c_0 \oplus k_0)$. The complexity of this step is about $2^{32} \cdot 2^8 =2^{40}$ S-box computations.
+
+    \item \emph{Step~1.2:} At this sub-step, performed for each guess of $k_0$, our goal is to replace the list $A_0$ with a list of size $2^{24}$ that corresponds to the values $(a_1,c_2,c_3)$ where $a_1 = a_0 \oplus S_1(c_1 \oplus k_1)$, for each value of $k_1$. This task is exactly the same as the task handled at the second and third steps of our attack described above, and hence, it can be performed in exactly the same way. Specifically, the convolution we have to compute is 
+    \begin{gather}
+    A_1[k_0, k_1][a_1,c_2,c_3]=\left((\bar{\chi}^1_{k_0,c_2,c_3} * \bar{I}^1)(a_1,k_1)\right) \bmod 2,
+    \shortintertext{where}
+    \bar{\chi}^1_{k_0,c_2,c_3}(a_0,c_1) = \indic(A_0(a_0,c_1,c_2,c_3)=1), \mbox{   and   } \bar{I}^1(x,y) = \indic(x=S_1(y)). \notag
+\end{gather}
+    Like in the second step of our attack described above, we can precompute one FFT and perform the computation of 7 FFTs in parallel. Hence, the complexity of this sub-step is $32/7 \cdot 2^{40}$ additions. 
+    \end{itemize}
+The alternative version of the attack is present in Algorithm~\ref{alg:fht-lowmem}.
+
+\input{algo/FHT_partial_sum_lowmem.tex}
+
+Formally, the complexity of the alternative way is higher than the complexity of the original way of performing this step described above --- $39/7 \cdot 2^{40}$ additions instead of $16/7 \cdot 2^{40}$ additions. As a result, the complexity of the attack with two sets of $2^{32}$ plaintexts becomes about $82.5 \cdot 2^{40} \approx 2^{46.4}$ additions (which is the complexity we mention in the introduction). However, this alternative has several advantages:
+\begin{enumerate}
+    \item \emph{Lower memory complexity.} In the attack described above, the most memory-consuming part is the first step which requires a list of $2^{40}$ bit entries. Thus, its memory complexity is about $2^{33}$ 128-bit blocks. 
+
+    The alternative way reduces the memory complexity of the first step to $2^{32}$ bits. We observe that all other steps of the attack can be performed with at most $2^{34}$ bits of memory. Indeed, all ciphertexts can be transformed immediately into entries of the table $A$ whose size is $2^{32}$ bits. The table $A_0$ (which should be stored for one value of $k_0$ at a time) requires $2^{32}$ bits. The subsequent tables used in the attack are smaller, and the arrays used in the FFTs are also smaller (as all FFTs are performed on 16-bit or 8-bit functions). By checking two sets of $2^{32}$ plaintexts in parallel, we reduce the number of remaining keys after examining the byte $x^4_0$ to $2^{24}$, and then the storage of these keys requires less than $2^{30}$ bits of memory. Therefore, the total memory complexity of the attack is reduced to about $2 \cdot 2^{32} + 2^{32}<2^{34}$ bits, i.e., $2^{27}$ 128-bit blocks.
+
+    \item \emph{Lower average-case time complexity.} While it is common to measure the complexity of attacks using the worst-case scenario (e.g., the complexity of exhaustive search over an $n$-bit key is computed as $2^n$, although on average, the attack finds the key after $2^{n-1}$ trials), the average-case complexity has clear practical significance. In the partial sums attack and in the Todo-Aoki attack, the average-case time complexity is half of the worst-case complexity, since the attack is applied for $2^8$ `external' guesses of a subkey, and the right key is expected to be found after trying half of these subkeys. In the original version of our attack, since the last step is performed for all keys in parallel, our average-case complexity is no better than the worst-case complexity, and so, we lose a factor of 2. In the alternative way described here, the attack is performed for each guess of the subkey $k^5_0$, and hence, we regain the factor 2 loss in the average-case complexity.
+
+    \item \emph{Practical effect on the time complexity.} The lower memory complexity of the alternative variant of the attack is expected to have an effect on the time complexity as well. Indeed, our experiments show that the memory accesses to the $2^{40}$-bit sized array slow down our attack considerably. As the alternative variant requires only $2^{34}$ bits of memory, it may be even faster in practice than the original variant. 
+ \end{enumerate}
+The alternative way of performing the first step is also used in our improved attack on the full MISTY1~\cite{MISTY1} presented in the full version of this paper \cite{fullversion} in Appendix~A.
+
+\subsection{Our Technique vs. Partial Sums and the Todo-Aoki Technique}\label{sec:sub:comparison}
+
+In this section, we present a comparison between our new technique and the partial sums technique and the Todo-Aoki FFT-based technique. First, we discuss the case of 6-round AES, and then we discuss applications to general ciphers.
+
+\subsubsection{The case of 6-round AES.} Here, we considered three attacks:
+\begin{enumerate}
+    \item \emph{Attack with 6 structures of $2^{32}$ chosen plaintexs.} The partial sums attack requires $2^{51.3}$ S-box computations, the Todo-Aoki attack requires $2^{50.8}$ additions, and our attack requires $2^{45.4}$ additions. Hence, our attack is at least 32 times faster than both previous attacks. In the experiments presented in Section~\ref{sec:sub:experiment}, the advantage of our attack was even bigger.
+
+    \item \emph{Attack with 2 structures of $2^{32}$ chosen plaintexs.} The partial sums attack requires $2^{51.7}$ computations, the Todo-Aoki attack requires $2^{51.2}$ additions, and our attack requires $2^{46}$ additions. Hence, our attack is at least 32 times faster than both previous attacks.
+
+    \item \emph{Attack with 1 structure of $2^{32}$ chosen plaintexs.} The partial sums attack requires $2^{54}$ S-box computations, the Todo-Aoki attack requires $2^{53}$ additions, and our attack requires $2^{48.1}$ additions. Hence, our attack is almost 32 times faster than both previous attacks. 
+\end{enumerate}
+
+\subsubsection{General comparison.} The speedup of our technique over the partial sums technique stems from two advantages: First, we replace key guessing steps with computation of convolutions. Second, we may pack the computation of several convolutions in a single convolution computation. The effect of the first advantage depends on the number of subkey bits guessed at the most time consuming steps of the attack: For a 4-bit subkey guess our gain is negligible, for an 8-bit key guess we get a speedup by a factor of more than 10 (without using packing), and for a 32-bit key guess our speedup factor may be larger than $2^{25}$ as is demonstrated in our attack on CLEFIA~\cite{CLEFIA} presented in Appendix~B of the full version of this paper~\cite{fullversion}. The effect of the second advantage is also dependent on the number of guessed subkey bits (since it determines the size of the functions whose convolution we have to compute, which in turn affects the number of convolutions we may pack together). Usually, between 4 and 8 convolutions can be packed together, which leads to a speedup by a factor of at least 4. Interestingly, when the number of guessed subkey bits is small (e.g., 4 bits), more convolutions can be packed together, and hence, a stronger effect of the second advantage compensates for a weaker effect of the first advantage. 
+
+The speedup of our technique over the Todo-Aoki technique stems from two advantages: First, our attack provides us with more flexibility, meaning that instead of replacing the whole attack by a single FFT-based step, we can consider each step (or group of steps) of the partial sums procedure separately and decide whether it will be better to perform it with key guessing or with an FFT-based technique. Second, we may pack the computation of several convolutions in a single convolution computation. The first advantage allows us to make use of partial knowledge of the subkey. A particular setting in which this advantage plays a role is analysis of additional plaintext sets after one set was used to obtain some key filtering. While our technique and the partial sums technique can make use of this partial knowledge, the Todo-Aoki technique must repeat the entire procedure. In the case of 6-round AES, this makes our attack 6 times faster than the Todo-Aoki attack without using packing. A more complete comparison between our method and the Todo-Aoki technique is available in Appendix~D if the full version of this paper~\cite{fullversion}. 
+
+The second advantage provides a speedup by a factor of at least 4, as was described above. Yet another advantage that is worth mentioning is that while the Todo-Aoki technique applies the FFT to functions in high dimensions (e.g., dimension 72 in the Todo-Aoki attack on 12-round CLEFIA-128 presented in~\cite{CANS:TodAok14}), our technique applies the FFT to functions of a significantly lower dimension (e.g., dimension 16 in our improved attack on 12-round CLEFIA-128 presented in Appendix~B of the full version of this paper~\cite{fullversion}). Computation of the FFT in high dimensions is quite cumbersome from the practical point of view, and hence, avoiding this is a practical advantage of our technique.  Moreover, higher dimension FFTs require additions with more precision; without using packing the Todo-Aoki attack on 6-round AES requires 64-bit additions while our attack can use 32-bit additions.
+
+Two advantages of the partial sums technique and the Todo-Aoki technique over our technique are a somewhat lower memory complexity (about $2^{27}$ 128-bit blocks for partial sums and about $2^{31}$ 128-bit blocks for Todo-Aoki) and the fact that on average, the attack finds the right key after trying half of the possible keys while our attack must try all keys. However, both advantages can be countered by implementing the first step of our attack in the alternative way presented in Section~\ref{sec:sub:improvements}, which makes the memory complexity equal to that of the partial sums attack and regains the `lower average-case complexity', as was explained in Section~\ref{sec:sub:improvements}.
+
+\subsection{Experimental Verification of Our Attack on 6-round AES} 
+\label{sec:sub:experiment}
+
+We have experimentally verified our attack on Amazon's AWS infrastructure. For comparison, we also implemented the partial sums attack of~\cite{FSE:FKLSSWW00} and the Todo-Aoki attack~\cite{CANS:TodAok14}. 
+All implementations in C are publicly available at the following link: 
+\[
+    \text{\href{https://github.com/ShibamCrS/Partial\_Sums\_Meet\_FFT}{https://github.com/ShibamCrS/Partial\_Sums\_Meet\_FFT}.}
+\]
+We note that the FFT implementations were based on the ``Fast Fast Hadamard Transform'' library~\cite{FFHT-Library}. 
+
+\subsubsection{The AWS instances used in the experiment.} For each attack we had to pick the most optimal AWS instance, depending on the computational and memory requirements. 
+
+The partial sums attack is quite easy to parallelize, and its memory requirement is low. (Specifically, the memory requirement is $2^{34}$ bits, or 16GB, as was shown above. Furthermore, only an $2^{32}$-bit list that stores the parities of $(c_0,c_1,c_2,c_3)$ combinations should be stored in a memory readable by all threads). As a result, we took the Intel-based instance (that has the AES-NI instruction set) with the maximal number of cores per US\$. At the time the experiment was performed (January, 2023) this was the m6i.32xlarge instance.\footnote{The m6i.32xlarge instance has 128 Intel-based vCPUs and 512GB of RAM.}
+
+For our attack (in its original variant) and for the Todo-Aoki attack, we needed instances that support a large amount of memory. The optimal choice for our attack was the same instance as the one for the partial sums attack --- the m6i.32xlarge instance. For the Todo-Aoki attack, we needed 64 GB of RAM for each thread of the attack. Hence, the optimal instance we found was the r6i.32xlarge instance.\footnote{The r6i.32xlarge instance has 128 Intel-based vCPUs and 1024GB of RAM.} We note that in the Todo-Aoki attack, we do not exploit all the vCPUs, but we do exploit the whole memory space (of 1 TB of RAM).
+
+\subsubsection{Experimental results.} The partial sums attack took \timePartial minutes to complete, and its cost was \pricePartial US\$ (we used the US-east-2 region (Ohio) which offered the cheapest cost-per-hour for a Linux machine of~6.144 US\$, before VAT). The Todo-Aoki approach took \timeFFT minutes to complete, and its cost was~\priceFFT US\$ (at 8.064 US\$ per hour).
+We note that due to the costs of these attacks, they were run only once, but none of those attacks (nor our attack) is expected to show high variance in the running time.
+
+To evaluate the running time of our attack, we ran Algorithm~\ref{alg:fht-basic} and Algorithm~\ref{alg:fht-lowmem} ten times each. In both algorithms, we used only 4 FFTs packed in parallel at each of Steps~1,2,3 and 8 FFTs packed in parallel at Step~4, for ease of implementation. The average running time of Algorithm~\ref{alg:fht-basic} is 90 minutes, and its average cost is 9.21 US\$. The average running time of Algorithm~\ref{alg:fht-lowmem} is \timeOur minutes and its cost is \priceOur US\$. Hence, in the experiment our attack was \cheapup-times cheaper and \speedup times faster than both partial sums and Todo-Aoki's attacks. 
+
+

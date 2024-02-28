@@ -1,0 +1,75 @@
+\begin{figure}[!ht]
+
+\begin{tikzpicture}[scale=0.35]
+
+  \draw[thick, dashed,] (-1,-2) rectangle (29,7) node[above left] {Round function};
+  \draw[thick,->] (-3,2) -- ++(3,0);
+  \draw[thick,->] (28,2) -- ++(3,0);
+  
+  \defineStateSize{4}
+  \defineArrowLength{2}
+  \defineTextSize{0.4cm}
+  \defineTextArrowSize{0.3cm}
+  \defineXGap{0}
+  \defineYGap{5}
+  \defineStateIndex{0}
+  \defineLinkRound{1}
+  \initdiffpath
+
+  \colorstate{
+    ....
+    ....
+    ....
+    ....
+  }{AK}
+  
+  \colorstate{
+    ....
+    ....
+    ....
+    ....
+  }{SB}
+
+  \draw[->, thick,shift={(7,-0.5)}] (0.5, 4) 
+  	-- ++(0, 1.5) 
+	-- node[above] {\textsf S} ++(6, 0) -- ++(0, -1.5);
+
+  \colorstate{
+    ...x
+    ...x
+    ...x
+    ...x
+  }{SR}
+  
+  \fill[color=lightgray] (21,0) rectangle ++(1,4);
+  \fill[color=lightgray] (27,0) rectangle ++(1,4);
+  \draw[->, thick,shift={(21,0)}] (0.5, 4) 
+  	-- ++(0, 1) 
+	-- node[above] {$C\gets \mathbf{M}\times C$} ++(6, 0) 
+	-- ++(0, -1);
+
+  \colorstate{
+    ...x
+    ..x.
+    .x..
+    x...
+  }{MC}
+
+  \colorstate{
+    ....
+    ....
+    ....
+    ....
+  }{0}
+  
+  \path ( 2,-1) node {$w^{i-1}$};
+  \path ( 8,-1) node {$x^i$};
+  \path (14,-1) node {$y^i$};
+  \path (20,-1) node {$z^i$};
+  \path (26,-1) node {$w^i$};
+
+\end{tikzpicture}
+
+    \caption{The \AES round function.}
+    \label{fig:aes}
+\end{figure}
