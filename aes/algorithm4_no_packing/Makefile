@@ -1,5 +1,5 @@
 CC=gcc
-OPT= -O2 #-g -fsanitize=address
+OPT= -O3 #-g -fsanitize=address
 LIB=-lm -lpthread -maes
 
 HED=$(shell ls *.h)
