@@ -25,12 +25,13 @@ by Todo et al.
 
 1. [Generic Structure](#generic-structure)
 2. [Requirements](#requirements)
-3. [Attacks On small AES](#attacks-on-small-aes)
+3. [Attack On AES](#attacks-on-aes)
+4. [Attacks On small-scale AES](#attacks-on-small-aes)
     <!-- 1. [Basic Attack](#basic-attack) -->
     <!-- 2. [Basic Attack](#basic-attack) -->
     <!-- 3. [Basic Attack](#basic-attack) -->
     <!-- 4. [Basic Attack](#basic-attack) -->
-4. [Attack On AES](#attacks-on-aes)
+
 
 ---
 
@@ -42,12 +43,15 @@ the results quickly and understanding, the same attack algorithms are also imple
 et al. in FSE 2005. The location of the ciphers in the repository is as follows:
 
 - [Attacks on 6-round AES](aes)
-- [Attacks on 6-round small AES](small_aes)
+- [Attacks on 6-round small-scale AES](small_aes)
 
 The root directory also contains an efficient implementation of the Fast Hadamard 
 Transformation that was originally implemented in [FFHT](https://github.com/FALCONN-LIB/FFHT).
 Finally, each attack directory contains a makefile.
 
+## Requirements
+    GCC >= 11.4
+    AES-NI (For AES Oracle only, the attack does not need AES-NI. We will add a AES implementation soon to relax this requirements.)
 ## Attacks On AES
 
 The directory for [AES](aes) contains the implementations of the following attacks  
