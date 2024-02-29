@@ -6,8 +6,10 @@ Published At: "Eurocrypt 2024"
 Full Version: "https://eprint.iacr.org/2023/1659"
 
 ---
+<p align="center">
+  <img src="fig/concept.png" alt="Sublime's custom image"/>
+</p>
 
-![head](fig/concept.png)
 
 This repository contains the implementation of the key recovery attacks presented in our paper:
 
@@ -51,7 +53,7 @@ Finally, each attack directory contains a makefile.
 
 ## Requirements
     GCC >= 11.4
-    AES-NI (For AES Oracle only, the attack does not need AES-NI. We will add a AES implementation soon to relax this requirements.)
+    AES-NI (For AES Oracle only, the attack does not need AES-NI. We will add an AES implementation soon to relax this requirement.)
 ## Attacks On AES
 
 The directory for [AES](aes) contains the implementations of the following attacks  
@@ -83,7 +85,7 @@ instruction set.
 
 ## Attacks On small AES
 
-In addition to the attack on AES, we also implement the attacks on small scale AES in the 
+In addition to the attack on AES, we also implement the attacks on small-scale AES in the 
 directory [small AES](small_aes). It contains the implementations of the following 
 attacks  
 
