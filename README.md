@@ -41,8 +41,9 @@ by Todo et al.
 
 The implementation of the attacks is primarily on the 6-round AES cipher. However, to test 
 the results quickly and understanding, the same attack algorithms are also implemented on 
-[small AES](https://link.springer.com/chapter/10.1007/11502760_10) proposed by Murphy 
-et al. in FSE 2005. The location of the ciphers in the repository is as follows:
+[small-scale AES](https://link.springer.com/chapter/10.1007/11502760_10). This small-scale
+version of AES was proposed by Murphy et al. in FSE 2005. The location of the ciphers in the 
+repository is as follows:
 
 - [Attacks on 6-round AES](aes)
 - [Attacks on 6-round small-scale AES](small_aes)
