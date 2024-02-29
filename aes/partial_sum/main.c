@@ -59,9 +59,9 @@ void attack(){
     struct timespec start, end;
     double time_meter;
     
-    uint8_t Key[16]={0x1,0x2,0x3,0x4,0xF,0x6,0x7,0x8,0x9,0xA,0x0F,0x0E,0x0D,0x0C,0x0E,0x00};
-    //uint8_t Key[16];
-    //generate_random(Key, 16);
+    /* uint8_t Key[16]={0x1,0x2,0x3,0x4,0xF,0x6,0x7,0x8,0x9,0xA,0x0F,0x0E,0x0D,0x0C,0x0E,0x00}; */
+    uint8_t Key[16];
+    generate_random(Key, 16);
     __m128i rk[11];
     AES_128_Key_Expansion(Key, rk);
     uint8_t *rk5 = (uint8_t *)(rk + 5);
@@ -76,7 +76,7 @@ void attack(){
     memcpy(rk5_prime, rk5, 16);
     inverseMixColumn(rk5_prime);
     
-    /* oracle_6r(rk); */
+    oracle_6r(rk);
     printf("\n=============Saved Data=============== \n");
     printf("Original: \n");
     printf("key_5_prime[0] : %02X\n",(unsigned char)rk5_prime[0]);
