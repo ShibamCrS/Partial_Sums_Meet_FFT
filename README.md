@@ -80,7 +80,7 @@ Algorithm 4 of our paper.
 [Partial-Sum Technique](https://link.springer.com/chapter/10.1007/3-540-44706-7_15)
 proposed by Ferguson et al., on AES.
 
-- [FFT-based Attack](aes/TODOs_attack) contains the implementation of the 
+- [FFT-based Attack](aes/TODOs_ATTACK) contains the implementation of the 
 [FFT-based attack](https://eprint.iacr.org/2014/187) proposed by Todo et al. on
 AES.
 
