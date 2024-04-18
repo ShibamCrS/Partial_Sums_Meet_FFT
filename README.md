@@ -110,7 +110,7 @@ Algorithm 4 of our paper.
 - [Partial Sum Technique](small_aes/partial_sum) contains the implementation of the 
 [Partial-Sum Technique](https://link.springer.com/chapter/10.1007/3-540-44706-7_15).
 
-- [FFT-based Attack](small_aes/TODOs_attack) contains the implementation of the 
+- [FFT-based Attack](small_aes/TODOs_ATTACK) contains the implementation of the 
 [FFT-based attack](https://eprint.iacr.org/2014/187).
 
 Each of the above directories contains a makefile and a main.c file. In main.c, we generate 
