@@ -48,9 +48,15 @@ repository is as follows:
 - [Attacks on 6-round AES](aes)
 - [Attacks on 6-round small-scale AES](small_aes)
 
-The root directory also contains an efficient implementation of the Fast Hadamard 
-Transformation that was originally implemented in [FFHT](https://github.com/FALCONN-LIB/FFHT).
-Finally, each attack directory contains a makefile.
+The root directory includes a highly optimized implementation of the Fast Hadamard 
+Transformation, developed in [FFHT](https://github.com/FALCONN-LIB/FFHT). It is important 
+to mention that in our scenario, we utilize the Hadamard Transformation, which belongs to 
+a broader category, called Fourier Transformations. Therefore, we specifically employ 
+FHT (Fast Hadamard Transformation). However, for the sake of consistency with literature 
+on 'FFT-based attacks', we refer to it as FFT (Fast Fourier Transformation) instead of 
+FHT (Fast Hadamard Transformation).
+
+Each attack directory contains a makefile.
 
 ## Requirements
     GCC >= 11.4
@@ -68,13 +74,13 @@ Algorithm 4 of our paper.
 
 - [Low Memory Variants Without Packing](aes/algorithm4_no_packing) contains the
   implementation of the low memory variant of the basic attack (Algorithm 4) on AES,
-  without packing multiple FHTs in 64-bit words.
+  without packing multiple FFTs in 64-bit words.
 
 - [Partial Sum Technique](aes/partial_sum) contains the implementation of the 
 [Partial-Sum Technique](https://link.springer.com/chapter/10.1007/3-540-44706-7_15)
 proposed by Ferguson et al., on AES.
 
-- [FFT-based Attack](aes/TODOs_attack) contains the implementation of the 
+- [FFT-based Attack](aes/TODOs_ATTACK) contains the implementation of the 
 [FFT-based attack](https://eprint.iacr.org/2014/187) proposed by Todo et al. on
 AES.
 
@@ -99,7 +105,7 @@ Algorithm 4 of our paper.
 
 - [Low Memory Variants Without Packing](small_aes/algorithm4_no_packing) contains the
   implementation of the low memory variant of the basic attack (Algorithm 4) on
-  small-scale AES, without packing multiple FHTs in 64-bit words.
+  small-scale AES, without packing multiple FFTs in 64-bit words.
 
 - [Partial Sum Technique](small_aes/partial_sum) contains the implementation of the 
 [Partial-Sum Technique](https://link.springer.com/chapter/10.1007/3-540-44706-7_15).
