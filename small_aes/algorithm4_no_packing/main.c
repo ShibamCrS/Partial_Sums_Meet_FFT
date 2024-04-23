@@ -105,6 +105,7 @@ uint64_t  using_thread(){
             return (thread_args[i].Key);
         }
     }
+    return 0;
 }
 void find_key(){
     struct timespec start, end;
@@ -186,7 +187,7 @@ void attack(){
     printf("key_5_prime[0] : %02X\n",(unsigned char)rk5_prime[0]);
     printf("key_6 : ");
     printreg(rk[ROUNDS], 16);
-    find_key(rk[ROUNDS][0]);
+    find_key();
     printf("Original: \n");
     printf("key_5_prime[0] : %02X\n",(unsigned char)rk5_prime[0]);
     printf("key_6 : ");

@@ -210,4 +210,5 @@ uint64_t Key_Guess_Using_Thread(bitmap **c){
             return (thread_args[i].recovered_key);
         }
     }
+    return 0;
 }

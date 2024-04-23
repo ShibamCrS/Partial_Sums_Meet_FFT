@@ -199,7 +199,7 @@ uint64_t get_071013(uint8_t *c){
     
     return data;
 }
-int bt_set_parity_threaded(bitmap *bt, uint64_t index){
+void bt_set_parity_threaded(bitmap *bt, uint64_t index){
     uint64_t word = (index/64); 
     uint8_t bit = (uint8_t)(index % 64);
 

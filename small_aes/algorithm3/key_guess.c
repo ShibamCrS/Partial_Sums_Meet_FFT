@@ -209,7 +209,7 @@ void* key_guess_345(void *args1){
  *Transform (FHT).
  * ************************************************************************/
 
-uint64_t filter_keys(bitmap *A, bitmap *RemovedKeys, uint64_t data_set_index){
+void filter_keys(bitmap *A, bitmap *RemovedKeys, uint64_t data_set_index){
     pthread_t thread_ids[THREADS]; 
     Step2Args  thread_args[THREADS];
     

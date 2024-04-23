@@ -25,6 +25,6 @@ void *key_guess_0(void *args1);
 void *key_guess_1(void *args1);
 void *key_guess_2(void *args1);
 void *key_guess_345(void *args1);
-uint64_t filter_keys(bitmap *A, bitmap *RemovedKeys, uint64_t data_set_index);
+void filter_keys(bitmap *A, bitmap *RemovedKeys, uint64_t data_set_index);
 #endif
 

@@ -61,14 +61,14 @@ int bt_set(bitmap *bt, uint64_t index, uint8_t value){
     return 1;
 }
 
-int bt_set_1(bitmap *bt, uint64_t index){
+void bt_set_1(bitmap *bt, uint64_t index){
     uint64_t word = (index >> 6);
     uint8_t bit = (uint8_t)(index & 0b111111);
     
     bt->bits[word] |= (1ULL << bit);
 }
 
-int bt_set_parity(bitmap *bt, uint64_t index){
+void bt_set_parity(bitmap *bt, uint64_t index){
     uint64_t word = (index >> 6);
     uint8_t bit = (uint8_t)(index & 0b111111);
     
@@ -145,7 +145,7 @@ uint64_t bt_popcount(uint64_t word){
     return __builtin_popcount(word_low) + __builtin_popcount(word_high);
 } 
 
-uint64_t bt_zero(bitmap *bt){
+void bt_zero(bitmap *bt){
     memset(bt->bits, 0, (bt->nrof_bits/64 + 1)*sizeof(uint64_t));
 }
 

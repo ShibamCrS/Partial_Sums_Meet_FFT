@@ -43,7 +43,7 @@ void set_diagonal(uint64_t value, uint8_t *state);
 //anti diagonal
 uint64_t get_071013(uint8_t *c);
 void print_info(uint8_t *p, uint8_t *c, uint32_t data);
-int bt_set_parity_threaded(bitmap *bt, uint64_t index);
+void bt_set_parity_threaded(bitmap *bt, uint64_t index);
 void* encrypt_over_ranges(void *args);
 void data_collection_phase_threaded(bitmap *c, uint8_t *p, uint8_t **rk);
 void data_collection_phase(bitmap *ciphertexts, uint8_t *p, uint8_t **rk);

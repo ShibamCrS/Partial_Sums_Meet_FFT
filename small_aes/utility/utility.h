@@ -11,7 +11,7 @@
 #include <time.h>
 
 #define THREADS 8
-#define DATA_PATH_6 "../data/data_6r_%d.tmp"
+#define DATA_PATH_6 "../data/data_6r_%llx.tmp"
 
 #define LOG_DATA 16
 #define ROUNDS 6
