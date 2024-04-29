@@ -60,7 +60,7 @@ Each attack directory contains a makefile.
 
 ## Requirements
     GCC >= 11.4
-    AES-NI (For AES Oracle only, the attack does not need AES-NI. We will add an AES implementation soon to relax this requirement.)
+    AES-NI (For AES Oracle only, the attack does not need AES-NI.)
 ## Attacks On AES
 
 The directory for [AES](aes) contains the implementations of the following attacks  
