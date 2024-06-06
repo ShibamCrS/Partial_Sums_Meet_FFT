@@ -60,7 +60,9 @@ Each attack directory contains a makefile.
 
 ## Requirements
     GCC >= 11.4
-    AES-NI (For AES Oracle only, the attack does not need AES-NI.)
+    AES-NI (For AES Oracle only, the attack does not need AES-NI).
+
+
 ## Attacks On AES
 
 The directory for [AES](aes) contains the implementations of the following attacks  
@@ -88,7 +90,18 @@ Each of the above directories contains a makefile and a main.c file. In main.c, 
 random plaintexts and key for the oracle. The AES oracle is given in [utility](aes/utility).
 For this, we use 
 [AES-NI](https://www.intel.com/content/www/us/en/developer/articles/technical/advanced-encryption-standard-instructions-aes-ni.html)
-instruction set.
+instruction set. Finally, the table below details the specifications of the AWS instances used in our attack, 
+along with their respective running times. All instances were sourced from the US-east-2 region (Ohio). 
+For an in-depth discussion on the selection of instances and the conducted experiments, please refer 
+to Section 3.5 of the full version of our paper.
+
+| Attack                                          | AWS Instance | RAM     | vCPUs | Running Time |
+|-------------------------------------------------|--------------|---------|-------|--------------|
+| Partial Sum + FFT (Algorithm 3)                 | m6i.32xlarge | 512 GB  | 128   | 90 minutes   |
+| Partial Sum + FFT (Algorithm 4)                 | m6i.32xlarge | 512 GB  | 128   | 48 minutes   |
+| Partial Sum + FFT (Algorithm 4 without packing) | m6i.32xlarge | 512 GB  | 128   | 92 minutes   |
+| Partial Sum                                     | m6i.32xlarge | 512 GB  | 128   | 4859 minutes |
+| FFT-based                                       | r6i.32xlarge | 1024 GB | 128   | 3120 minutes |
 
 ## Attacks On small AES
 
